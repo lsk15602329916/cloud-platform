@@ -1,0 +1,277 @@
+<template>
+  <v-dialog
+          v-model="addUserDialog"
+          max-width="800px"
+  >
+    <template v-slot:activator="{ on, attrs }">
+      <v-btn
+              color="primary"
+              dark
+              class="mb-2"
+              width="200px"
+              medium
+              v-bind="attrs"
+              v-on="on"
+      >
+        新增用户
+      </v-btn>
+    </template>
+    <v-card>
+      <v-card-title>
+        <span class="headline">新增用户</span>
+      </v-card-title>
+
+      <v-card-text>
+        <v-container>
+          <v-form v-model="valid">
+            <v-row>
+              <v-col
+                      cols="12"
+                      sm="6"
+                      md="4"
+              >
+                <v-select
+                        item-text="roleDescription"
+                        item-value="roleId"
+                        v-model="addUserItem.roleId"
+                        :rules="rules.roleId"
+                        :items="roleList"
+                        label="选择角色"
+                ></v-select>
+              </v-col>
+              <v-col
+                      v-if="addUserItem.roleId === 2"
+                      cols="12"
+                      sm="6"
+                      md="4"
+              >
+                <v-select
+                        item-text="name"
+                        item-value="userId"
+                        v-model="addUserItem.superiorUserId"
+                        :rules="rules.roleId"
+                        :items="agentBriefInfoList"
+                        label="选择区域代理商"
+                ></v-select>
+              </v-col>
+              <v-col
+                      cols="12"
+                      sm="6"
+                      md="4"
+              >
+                <v-text-field
+                        v-model="addUserItem.userNumber"
+                        label="用户编号"
+                        :rules="rules.userNumber"
+                ></v-text-field>
+              </v-col>
+              <v-col
+                      cols="12"
+                      sm="6"
+                      md="4"
+              >
+                <v-text-field
+                        v-model="addUserItem.username"
+                        label="登录账号"
+                        :rules="rules.username"
+                ></v-text-field>
+              </v-col>
+              <v-col
+                      cols="12"
+                      sm="6"
+                      md="4"
+              >
+                <v-text-field
+                        v-model="addUserItem.password"
+                        label="登录密码"
+                        :rules="rules.password"
+                ></v-text-field>
+              </v-col>
+              <v-col
+                      cols="12"
+                      sm="6"
+                      md="4"
+              >
+                <v-text-field
+                        v-model="addUserItem.password2"
+                        label="登录密码"
+                        :rules="rules.password2"
+                ></v-text-field>
+              </v-col>
+              <v-col
+                      cols="12"
+                      sm="6"
+                      md="4"
+              >
+                <v-text-field
+                        v-model="addUserItem.name"
+                        label="用户姓名"
+                        :rules="rules.name"
+                ></v-text-field>
+              </v-col>
+              <v-col
+                      cols="12"
+                      sm="6"
+                      md="4"
+              >
+                <v-text-field
+                        v-model="addUserItem.contact"
+                        label="联系方式"
+                        :rules="rules.contact"
+                ></v-text-field>
+              </v-col>
+              <v-col
+                      cols="12"
+                      sm="6"
+                      md="4"
+              >
+                <v-text-field
+                        v-model="addUserItem.address"
+                        label="地址"
+                        :rules="rules.address"
+                ></v-text-field>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col
+                      cols="24"
+              >
+                <v-text-field
+                        v-model="addUserItem.message"
+                        label="备注"
+                        :rules="rules.message"
+                ></v-text-field>
+              </v-col>
+            </v-row>
+          </v-form>
+        </v-container>
+      </v-card-text>
+
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn
+                color="blue darken-1"
+                text
+                @click="closeAddUserDialog"
+        >
+          取消
+        </v-btn>
+        <v-btn
+                color="blue darken-1"
+                text
+                @click="handleAddUser"
+        >
+          确认
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+</template>
+
+<script>
+  export default {
+    name: "userListDialog",
+    data: () => ({
+      roleList: [],
+      addUserDialog: false,
+      // 添加用户 - 表单是否验证
+      valid: false,
+      // 添加用户数据格式
+      addUserItem: {
+        roleId: '',
+        userNumber: '',
+        username: '',
+        password: '',
+        password2: '',
+        name: '',
+        contact: '',
+        address: '',
+        // 旗上区域代理商的id
+        superiorUserId: '',
+        message: ''
+      },
+      rules: {
+        roleId: [
+          value => !!value || '必选',
+        ],
+        userNumber: [
+          value => (value && value.length >= 1 && value.length <= 32) || '字符长度为 1~32',
+          value => !(/[^a-zA-Z0-9_]/.exec(value)) || '可使用数字、英文、下划线，不能包括特殊符号'
+        ],
+        username: [
+          value => (value && value.length >= 1 && value.length <= 24) || '字符长度为 1~24',
+          value => !(/[^a-zA-Z0-9]/.exec(value)) || '需使用数字、英文，不能使用特殊符号'
+        ],
+        password: [
+          value => (value && value.length >= 6 && value.length <= 12) || '字符长度为 6~12',
+          value => !(/[^a-zA-Z0-9]/.exec(value)) || '需使用数字、英文，不能使用特殊符号'
+        ],
+        password2: [
+          value => (value && value === this.addUserItem.password) || '密码不一致',
+        ],
+        name: [
+          value => (value && value.length >= 1 && value.length <= 32) || '字符长度为 1~32',
+        ],
+        contact: [
+          value => (value && value.length >= 1 && value.length <= 24) || '字符长度为 1~24',
+          value => /^(((\+\d{2}-)?0\d{2,3}-\d{7,8})|((\+\d{2}-)?(\d{2,3}-)?([1][0-9][0-9]\d{8})))$/.exec(value) || '请输入正确的电话号码'
+        ],
+        address: [
+
+        ],
+        message: [
+          value => (value.length <= 128) || '字符长度为 0~128',
+        ]
+      },
+    }),
+    watch: {
+      addUserDialog(val) {
+        if (val) {
+          this.getRoleList()
+          this.getAgentBriefInfoList()
+        } else {
+          this.closeAddUserDialog()
+        }
+      },
+    },
+    methods: {
+      async getRoleList() {
+        const { data: { data }} = await this.$axios.get('/role/findRole')
+        this.roleList = data
+      },
+      async getAgentBriefInfoList() {
+        const { data: { data }} = await this.$axios.get('/user/findRegionalAgentBriefInfo')
+        this.agentBriefInfoList = data
+      },
+      // Dialog 控制层
+      closeAddUserDialog () {
+        this.addUserDialog = false
+      },
+      async handleAddUser() {
+        if (!this.valid) {
+          this.$emit('showSnackbar', '请正确填写信息')
+          return
+        }
+        const { data: { code, message }} = await this.$axios.get('/user/checkUser',{ params: { username: this.addUserItem.username }})
+        if(!code) {
+          const addUserItem = this.addUserItem
+          const { roleId } = this.addUserItem
+          // 普通用户为 2
+          // 区域代理商为 3
+          switch (roleId) {
+            case 2:
+              break
+            case 3:
+          }
+          const { data } = await this.$axios.post('/user/addUser', addUserItem)
+        } else {
+          this.$emit('showSnackbar', message)
+        }
+      },
+    }
+  }
+</script>
+
+<style scoped>
+
+</style>
