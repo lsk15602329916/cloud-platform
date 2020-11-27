@@ -85,6 +85,12 @@
 <script>
   export default {
     name: "userListDialog",
+    props: {
+      currentUserId: {
+        type: Number,
+        require
+      }
+    },
     data: () => ({
       deviceList: [],
       addDeviceDialog: false,
@@ -124,7 +130,18 @@
       async handleAddDevice() {
         if (!this.valid) {
           this.$emit('showSnackbar', '请正确填写信息')
+          return
         }
+        const { deviceNumber, deviceName, message } = this.addDeviceItem
+        const { data: {code}} = await this.$axios.post('/device/addDevice', {
+          userId: this.currentUserId,
+          deviceNumber,
+          deviceName,
+          message
+        })
+        !code && this.$emit('showSnackbar', '添加成功')
+        this.$emit('updateDevice')
+        this.closeAddDeviceDialog()
       },
     }
   }
