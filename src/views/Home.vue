@@ -28,6 +28,7 @@
       >
         <v-list-item
                 v-for="item in items"
+                v-show="item.role.includes(getItem('roleName'))"
                 :key="item.title"
                 link
                 @click="$router.push(item.route)"
@@ -59,11 +60,11 @@ export default {
   data () {
     return {
       items: [
-        { title: '首页', icon: 'mdi-view-dashboard', route: '/index'},
-        { title: '账号信息', icon: 'mdi-account', route: '/account-information' },
-        { title: '用户列表', icon: 'mdi-help-box', route: '/user-list' },
-        { title: '区域代理商', icon: 'mdi-help-box', route: '/regional-agents' },
-        { title: '设备/查询', icon: 'mdi-help-box', route: '/device-query' },
+        { title: '首页', icon: 'mdi-view-dashboard', route: '/index', role: ['admin', 'user', 'regionalAgent']},
+        { title: '账号信息', icon: 'mdi-account', route: '/account-information', role: ['admin', 'user', 'regionalAgent'] },
+        { title: '用户列表', icon: 'mdi-help-box', route: '/user-list', role: ['admin', 'regionalAgent']},
+        { title: '区域代理商', icon: 'mdi-help-box', route: '/regional-agents', role: ['admin']},
+        { title: '设备列表', icon: 'mdi-help-box', route: '/device-list', role: ['user'] },
       ],
       right: null,
     }

@@ -41,7 +41,7 @@
               >
                 <v-text-field
                         v-model="addDeviceItem.deviceName"
-                        label="设备名称"
+                        label="设备型号"
                         :rules="rules.deviceName"
                 ></v-text-field>
               </v-col>

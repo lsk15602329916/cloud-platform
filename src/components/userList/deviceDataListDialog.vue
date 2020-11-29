@@ -28,33 +28,11 @@
                 <v-col
                         cols="24"
                 >
-                  <v-text-field
-                          v-model="addDeviceItem.deviceNumber"
-                          label="设备编号"
-                          :rules="rules.deviceNumber"
-                  ></v-text-field>
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col
-                        cols="24"
-                >
-                  <v-text-field
-                          v-model="addDeviceItem.deviceName"
-                          label="设备名称"
-                          :rules="rules.deviceName"
-                  ></v-text-field>
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col
-                        cols="24"
-                >
-                  <v-text-field
-                          v-model="addDeviceItem.message"
-                          label="有关信息"
-                          :rules="rules.message"
-                  ></v-text-field>
+                  <v-file-input
+                          accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                          label="请选择文件"
+                          @change="handleFileChange"
+                  ></v-file-input>
                 </v-col>
               </v-row>
             </v-form>
@@ -66,9 +44,9 @@
           <v-btn
                   color="blue darken-1"
                   text
-                  @click="handleAddDevice"
+                  @click="handleImportDeviceData"
           >
-            确认
+            完成
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -99,35 +77,31 @@
             <v-form v-model="valid">
               <v-row>
                 <v-col
-                        cols="24"
+                        cols="4"
                 >
-                  <v-text-field
-                          v-model="addDeviceItem.deviceNumber"
-                          label="设备编号"
-                          :rules="rules.deviceNumber"
-                  ></v-text-field>
+                  <v-switch
+                          v-model="isNeedBarCode"
+                          label="展示SN条码"
+                  ></v-switch>
                 </v-col>
-              </v-row>
-              <v-row>
                 <v-col
-                        cols="24"
+                        cols="4"
                 >
-                  <v-text-field
-                          v-model="addDeviceItem.deviceName"
-                          label="设备名称"
-                          :rules="rules.deviceName"
-                  ></v-text-field>
+                  <v-switch
+                          v-model="isNeedBeatOutput"
+                          label="展示节拍输出"
+                  ></v-switch>
                 </v-col>
-              </v-row>
-              <v-row>
                 <v-col
-                        cols="24"
+                        cols="4"
                 >
-                  <v-text-field
-                          v-model="addDeviceItem.message"
-                          label="有关信息"
-                          :rules="rules.message"
-                  ></v-text-field>
+                  <v-select
+                          :items="fileFormatItems"
+                          hide-details
+                          label="选择模式"
+                          v-model="fileFormat"
+                          :rules="rules"
+                  ></v-select>
                 </v-col>
               </v-row>
             </v-form>
@@ -139,7 +113,7 @@
           <v-btn
                   color="blue darken-1"
                   text
-                  @click="handleAddDevice"
+                  @click="handleExportDeviceData"
           >
             确认
           </v-btn>
@@ -171,7 +145,7 @@
             <v-form v-model="valid">
               <v-row>
                 <v-col
-                        cols="24"
+                        cols="6"
                 >
                   <v-select
                           :items="modeItems"
@@ -179,12 +153,11 @@
                           label="选择模式"
                           v-model="mode"
                           @change="getAddHeaders"
+                          :rules="rules"
                   ></v-select>
                 </v-col>
-              </v-row>
-              <v-row>
                 <v-col
-                        cols="24"
+                        cols="6"
                 >
                   <v-select
                           :items="resultJudgmentItems"
@@ -192,53 +165,20 @@
                           label="选择结果"
                           v-model="resultJudgment"
                           @change="getAddHeaders"
+                          :rules="rules"
                   ></v-select>
                 </v-col>
               </v-row>
-              <v-row justify="center">.
+              <v-row >
                 <v-col
-                        cols="12"
-                >
-                  <v-menu
-                          ref="menu"
-                          v-model="isMenuShow"
-                          :close-on-content-click="false"
-                          :nudge-right="40"
-                          :return-value.sync="time"
-                          transition="scale-transition"
-                          offset-y
-                          max-width="290px"
-                          min-width="290px"
-                  >
-                    <template v-slot:activator="{ on, attrs }">
-                      <v-text-field
-                              v-model="time"
-                              label="时期"
-                              prepend-icon="mdi-clock-time-four-outline"
-                              readonly
-                              v-bind="attrs"
-                              v-on="on"
-                      ></v-text-field>
-                    </template>
-                    <v-time-picker
-                            v-if="isMenuShow"
-                            v-model="time"
-                            full-width
-                            format="24hr"
-                            use-seconds
-                            @click:minute="$refs.menu.save(time)"
-                    ></v-time-picker>
-                  </v-menu>
-                </v-col>
-              </v-row>
-              <v-row  v-for="(item, index) in addOptions">
-                <v-col
-                        cols="24"
+                        cols="6"
+                        v-for="(item, index) in addOptions"
                 >
                   <v-text-field
                           v-model="item.value"
                           :label="item.label"
                           hide-details
+                          :rules="rules"
                   ></v-text-field>
                 </v-col>
               </v-row>
@@ -251,7 +191,7 @@
           <v-btn
                   color="blue darken-1"
                   text
-                  @click="handleAddDevice"
+                  @click="handleAddDeviceData"
           >
             确认
           </v-btn>
@@ -268,18 +208,24 @@
       currentUserId: {
         type: Number,
         require
+      },
+      currentDeviceId: {
+        type: Number,
+        require
       }
     },
     data: () => ({
-      time: null,
-      isMenuShow: false,
+      isNeedBarCode: true,
+      isNeedBeatOutput: true,
+
       // mode Item
+      fileFormatItems: ['csv', 'xls'],
       modeItems: ['PLR', 'PDL', 'CPDL', 'OCC', 'VXXX', 'MFR'],
       resultJudgmentItems: ['Accept', 'Reject'],
       mode: '',
       resultJudgment: '',
+      fileFormat: 'xls',
       addOptions: [],
-      deviceList: [],
       importDialog: false,
       exportDialog: false,
       addDialog: false,
@@ -291,21 +237,12 @@
         deviceName: '',
         message: ''
       },
-      rules: {
-        deviceNumber: [
-          value => (value && value.length >= 1 && value.length <= 32) || '字符长度为 1~32',
-          value => !(/[^a-zA-Z0-9_]/.exec(value)) || '可使用数字、英文、下划线，不能包括特殊符号'
-        ],
-        deviceName: [
-          value => (value && value.length >= 1 && value.length <= 32) || '字符长度为 1~32',
-          value => !(/[^a-zA-Z0-9_]/.exec(value)) || '可使用数字、英文、下划线，不能包括特殊符号'
-        ],
-        message: [
-          value => (value && value.length >= 1 && value.length <= 24) || '字符长度为 1~24',
-          value => !(/[^a-zA-Z0-9]/.exec(value)) || '需使用数字、英文，不能使用特殊符号'
-        ]
-      },
+      rules: [
+        value => !!value || '必填',
+        value => (value || '').length <= 20 || '长度不应超过 20 个字符',
+      ],
     }),
+
     watch: {
       addDialog(val) {
         if (val) {
@@ -320,66 +257,18 @@
             console.log('err', err)
           })
         } else {
+          this.addOptions = []
           this.closeAddDialog()
         }
       },
-    },
-    async mounted() {
     },
     methods: {
       // Dialog 控制层
       closeAddDialog () {
         this.addDialog = false
       },
-      async handleAddDevice() {
-        if (!this.valid) {
-          this.$emit('showSnackbar', '请正确填写信息')
-          return
-        }
-        const { deviceNumber, deviceName, message } = this.addDeviceItem
-        const { data: {code}} = await this.$axios.post('/device/addDevice', {
-          userId: this.currentUserId,
-          deviceNumber,
-          deviceName,
-          message
-        })
-        !code && this.$emit('showSnackbar', '添加成功')
-        this.$emit('updateDevice')
-        this.closeAddDeviceDialog()
-      },
       async getAddHeaders() {
-        this.addOptions = [
-          {
-          label: '组号',
-          prop: 'groupId',
-          value: ''
-          },
-          {
-            label: '日期',
-            prop: 'date',
-            value: ''
-          },
-          {
-            label: '时间',
-            prop: 'time',
-            value: ''
-          },
-          {
-            label: '运行次数',
-            prop: 'runNumber',
-            value: ''
-          },
-          {
-            label: '被测试条码',
-            prop: 'testedBarCode',
-            value: ''
-          },
-          {
-            label: '节拍输出',
-            prop: 'beatOutput',
-            value: ''
-          },
-        ]
+        this.addOptions = []
         const resultJudgment = this.resultJudgment
         const testMode = this.mode
         if (!resultJudgment || !testMode) {
@@ -396,11 +285,113 @@
             item.value = ''
           }
           this.addOptions = data
+          this.addOptions.unshift(
+            {
+              label: '组号',
+              prop: 'groupId',
+              value: ''
+            }, {
+              label: '节拍输出',
+              prop: 'beatOutput',
+              value: ''
+            }, {
+              label: '运行次数',
+              prop: 'runNumber',
+              value: ''
+            }, {
+              label: '被测条形码',
+              prop: 'testedBarCode',
+              value: ''
+            })
         } else {
           this.addOptions = []
         }
-        console.log('dat啊手动阀手动阀a', this.addOptions)
       },
+      async handleAddDeviceData() {
+
+        if (!this.valid) {
+          this.$emit('showSnackbar', '请正确填写信息')
+          return
+        }
+        const now = new Date()
+        const year = now.getFullYear()
+        const month = now.getMonth() + 1
+        const day = now.getDate()
+        const hour = now.getHours()
+        const minutes = now.getMinutes()
+        const seconds = now.getSeconds()
+        const date = `${year}-${month}-${day}`
+        const time = `${hour}:${minutes}:${seconds}`
+
+        const testMode = this.mode
+        const resultJudgment = this.resultJudgment
+        const deviceId = this.currentDeviceId
+        const form = {
+          date,
+          time,
+          testMode,
+          resultJudgment,
+          deviceId
+        }
+        for (let item of this.addOptions) {
+          form[item.prop] = item.value
+        }
+        const { data: {code, message} } = await this.$axios.post('/deviceData/addDeviceData', form)
+        this.$emit('showSnackbar', message)
+        this.$emit('updateDeviceData')
+        this.closeAddDialog()
+      },
+      async handleExportDeviceData() {
+        const deviceId = this.currentDeviceId
+        const isNeedBarCode = this.isNeedBarCode
+        const isNeedBeatOutput = this.isNeedBeatOutput
+        this.$axios.get("deviceData/exportDeviceData", {
+          params: {
+            deviceId,
+            isNeedBarCode,					//导出excel是否要包含SN条码
+            isNeedBeatOutput,				//导出excel是否要包含测试节拍输出
+            exportType: this.fileFormat
+          },
+          headers: {'Content-type': 'application/json'},
+          responseType: 'arraybuffer'
+        }).then(res => {
+          // 创建Blob对象，设置文件类型
+          let blob = new Blob([res.data], {type: "application/vnd.ms-excel"});
+          let url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.style.display = 'none';
+          link.href = url;
+          link.download = `导出文件.${this.fileFormat}`// 自定义文件名
+          link.click();// 下载文件
+          // URL.revokeObjectURL(url); // 释放内存
+        }).catch(err => {
+          this.$emit('showSnackbar', '导出失败')
+        })
+      },
+      handleFileChange(file) {
+        this.file = file
+      },
+      async handleImportDeviceData() {
+        const file = this.file
+        const formData = new FormData();
+        formData.append('uploadExcel', file[0])
+        formData.append('deviceId', this.currentDeviceId)
+        this.$axios({method: 'post', url: '/deviceData/importDeviceData',
+          data: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }).then(res => {
+          const { data: {code, message}} = res
+            if (!code) {
+              this.$emit('showSnackbar', message)
+            }
+          }
+        ).catch(err => {
+          this.$emit('showSnackbar', '导入失败')
+        })
+        this.importDialog = false
+      }
     }
   }
 </script>

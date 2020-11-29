@@ -34,9 +34,9 @@ const routes = [
       name: 'RegionalAgents',
       component: () => import('../views/home/RegionalAgents.vue')
     },{
-      path: '/device-query',
-      name: 'DeviceQuery',
-      component: () => import('../views/home/DeviceQuery.vue')
+      path: '/device-list',
+      name: 'DeviceList',
+      component: () => import('../views/home/DeviceList.vue')
     }]
   },
 ]

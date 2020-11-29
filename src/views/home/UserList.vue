@@ -40,15 +40,26 @@
                   inset
                   vertical
           ></v-divider>
-          <div style="width: 100px"   v-if="listIndex === 2">
+          <div style="width: 80px"   v-if="listIndex === 2">
             <v-select
                     @change="handleModeChange"
                     class="mt-1"
                     height="28px"
                     :items="modeItems"
-                    value="PLR"
+                    value="ALL"
                     hide-details
                     label="选择模式"
+            ></v-select>
+          </div>
+          <div style="width: 80px"   v-if="listIndex === 2">
+            <v-select
+                    @change="handleResultJudgmentChange"
+                    class="mt-1"
+                    height="28px"
+                    :items="resultJudgmentItems"
+                    value="ALL"
+                    hide-details
+                    label="选择结果"
             ></v-select>
           </div>
           <v-divider
@@ -60,6 +71,7 @@
           <v-text-field
                   v-model="search"
                   append-icon="mdi-magnify"
+                  @change="handleSearch"
                   label="查询"
                   single-line
                   hide-details
@@ -69,7 +81,14 @@
                   inset
                   vertical
           ></v-divider>
-          <component :is="dialogComponent" @showSnackbar="showSnackbar" :currentUserId="currentUserId" @updateDevice="getDeviceList"></component>
+          <component :is="dialogComponent"
+                     @showSnackbar="showSnackbar"
+                     :currentDeviceId="currentDeviceId"
+                     :currentUserId="currentUserId"
+                     @updateDevice="getDeviceList"
+                     @updateDeviceData="getDeviceData"
+                     @updateUser="getUserList"
+          ></component>
         </v-toolbar>
       </template>
       <template v-slot:item.actions="{ item }">
@@ -80,11 +99,10 @@
           >
             mdi-book-search
           </v-icon>
-<!--          <v-icon-->
-<!--                  @click="deleteItem(item)"-->
-<!--          >-->
-<!--            mdi-delete-->
-<!--          </v-icon>-->
+          <v-icon
+          >
+            mdi-access-point
+          </v-icon>
         </div>
         <div v-if="listIndex === 1">
           <v-icon
@@ -149,6 +167,7 @@
         isLoading: false,
         lastPn: 1,
         currentUserId: -1,
+        currentDeviceId: -1,
         // 表格
         tableOptions: {
           page: 1,
@@ -170,7 +189,7 @@
             align: 'start',
             value: 'userNumber',
           },
-          { text: '用户姓名', value: 'name', sortable: false },
+          { text: '用户名称', value: 'name', sortable: false },
           { text: '联系方式', value: 'contact', sortable: false },
           { text: '备注', value: 'message', sortable: false },
           { text: '操作', value: 'actions', sortable: false },
@@ -267,6 +286,9 @@
 
         // mode Item
         modeItems: ['ALL', 'PLR', 'PDL', 'CPDL', 'OCC', 'VXXX', 'MFR'],
+        resultJudgmentItems: ['ALL', 'Accept', 'Reject'],
+        searchMode: 'ALL',
+        searchResultJudgment: 'ALL',
         // 列表操作
         editedIndex: -1,
         editedItem: null,
@@ -369,18 +391,19 @@
       },
       // 获取用户列表
 
-      async getUserList(pn = 1){
+      async getUserList(pn = 1, userName = '', userNumber = '', searchMode = false){
         const { data: {data: {list , total}}} = await this.$axios.get('/user/findUser',{
           params: {
             loginUserId: this.getItem('userId'),
             pn,
             roleName: 'user',
-            userName: '',
-            userNumber: ''
+            userName,
+            userNumber
           }
         })
-        this.userList = list
+        searchMode || (this.userList = list)
         this.total = total
+        return list
       },
       // 获取设备列表
       async searchUserDevice(item) {
@@ -406,21 +429,26 @@
       },
       // 获取设备 Data
       async searchDeviceData(item) {
+        this.resultJudgment
         this.editedIndex = this.deviceList.indexOf(item)
         this.editedItem = Object.assign({}, item)
+        this.currentDeviceId = item.deviceId
         this.listIndex = 2
         await this.getDeviceData()
         console.log('item', item)
       },
-      async getDeviceData(pn = 1, testMode = 'ALL') {
+      async getDeviceData(pn = 1, testMode = 'ALL', resultJudgment = 'ALL', testedBarCode = this.search) {
         const { deviceId } = this.editedItem
         const { data, data: { data: { headers, pageInfo: { list, total }}}} = await this.$axios.get('/deviceData/findDeviceData',{ params: {
             pn,
             deviceId,
             testMode,
+            resultJudgment,
+            testedBarCode,
             groupId: ''
           }})
         this.deviceDataList = list
+        console.log('list', total)
         this.total = total
       },
       // 展示消息框
@@ -478,13 +506,41 @@
       handleBreadCrumbsClick(item) {
         this.listIndex = this.breadcrumbsItems.indexOf(item)
       },
-      handlePageChange(page) {
+      async handlePageChange(page) {
+        this.isLoading = true
         const methods = [this.getUserList, this.getDeviceList, this.getDeviceData]
-        methods[this.listIndex](page)
+        await methods[this.listIndex](page)
+        this.isLoading = false
       },
       handleModeChange(mode) {
-        this.getDeviceData(1, mode)
+        this.searchMode = mode
+        this.getDeviceData(1, this.searchMode, this.searchResultJudgment)
       },
+      handleResultJudgmentChange(resultJudgment) {
+        this.searchResultJudgment = resultJudgment
+        this.getDeviceData(1, this.searchMode, this.searchResultJudgment)
+      },
+      async handleSearch() {
+        switch (this.listIndex) {
+          case 0:
+            const list1 = await this.getUserList(1, this.search, '', true)
+            const list2 = await this.getUserList(1, '', this.search, true)
+            console.log('list1', list1)
+            console.log('list2', list2)
+            const totalList = list1.concat(list2)
+            this.userList = totalList
+            this.total = totalList.length
+            break
+          case 1:
+            break
+          case 2:
+            this.getDeviceData(1, this.searchMode, this.searchResultJudgment, this.search)
+            break
+        }
+      },
+      searchSN(str) {
+        this.getDeviceData(1, this.searchMode, this.searchResultJudgment, this.search)
+      }
     }
   }
 </script>

@@ -46,6 +46,7 @@
                       md="4"
               >
                 <v-select
+                        v-if="getItem('roleName') !== 'regionalAgent'"
                         item-text="name"
                         item-value="userId"
                         v-model="addUserItem.superiorUserId"
@@ -93,9 +94,9 @@
                       md="4"
               >
                 <v-text-field
-                        v-model="addUserItem.password2"
-                        label="登录密码"
-                        :rules="rules.password2"
+                        v-model="addUserItem.confirmPassword"
+                        label="确认密码"
+                        :rules="[handleVerifyPassword]"
                 ></v-text-field>
               </v-col>
               <v-col
@@ -128,7 +129,6 @@
                 <v-text-field
                         v-model="addUserItem.address"
                         label="地址"
-                        :rules="rules.address"
                 ></v-text-field>
               </v-col>
             </v-row>
@@ -173,6 +173,7 @@
     name: "userListDialog",
     data: () => ({
       roleList: [],
+      agentBriefInfoList: [],
       addUserDialog: false,
       // 添加用户 - 表单是否验证
       valid: false,
@@ -182,7 +183,7 @@
         userNumber: '',
         username: '',
         password: '',
-        password2: '',
+        confirmPassword: '',
         name: '',
         contact: '',
         address: '',
@@ -206,7 +207,7 @@
           value => (value && value.length >= 6 && value.length <= 12) || '字符长度为 6~12',
           value => !(/[^a-zA-Z0-9]/.exec(value)) || '需使用数字、英文，不能使用特殊符号'
         ],
-        password2: [
+        confirmPassword: [
           value => (value && value === this.addUserItem.password) || '密码不一致',
         ],
         name: [
@@ -214,7 +215,7 @@
         ],
         contact: [
           value => (value && value.length >= 1 && value.length <= 24) || '字符长度为 1~24',
-          value => /^(((\+\d{2}-)?0\d{2,3}-\d{7,8})|((\+\d{2}-)?(\d{2,3}-)?([1][0-9][0-9]\d{8})))$/.exec(value) || '请输入正确的电话号码'
+          value => (/^(((\+\d{2}-)?0\d{2,3}-\d{7,8})|((\+\d{2}-)?(\d{2,3}-)?([1][0-9][0-9]\d{8})))$/.exec(value)) || '请输入正确的电话号码'
         ],
         address: [
 
@@ -235,6 +236,13 @@
       },
     },
     methods: {
+      handleVerifyPassword(value) {
+        if (value && value === this.addUserItem.password) {
+          return true
+        } else {
+          return '密码不一致'
+        }
+      },
       async getRoleList() {
         const { data: { data }} = await this.$axios.get('/role/findRole')
         this.roleList = data
@@ -242,6 +250,7 @@
       async getAgentBriefInfoList() {
         const { data: { data }} = await this.$axios.get('/user/findRegionalAgentBriefInfo')
         this.agentBriefInfoList = data
+        console.log('agent', this.agentBriefInfoList)
       },
       // Dialog 控制层
       closeAddUserDialog () {
@@ -255,15 +264,17 @@
         const { data: { code, message }} = await this.$axios.get('/user/checkUser',{ params: { username: this.addUserItem.username }})
         if(!code) {
           const addUserItem = this.addUserItem
-          const { roleId } = this.addUserItem
-          // 普通用户为 2
-          // 区域代理商为 3
-          switch (roleId) {
-            case 2:
-              break
-            case 3:
+          const { roleId } = addUserItem
+          addUserItem.reservedInfos = ''
+          if (this.getItem('roleName') === 'regionalAgent') {
+            addUserItem.superiorUserId = this.getItem('userId')
           }
+
           const { data } = await this.$axios.post('/user/addUser', addUserItem)
+          this.addUserDialog = false
+          this.$emit('showSnackbar', '添加成功')
+          this.$emit('updateUser')
+          console.log('data', data)
         } else {
           this.$emit('showSnackbar', message)
         }

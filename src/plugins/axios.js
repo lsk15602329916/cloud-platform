@@ -4,8 +4,8 @@ import Vue from 'vue';
 import axios from "axios";
 
 // Full config:  https://github.com/axios/axios#request-config
-// axios.defaults.baseURL = 'http://118.25.85.198:8800/cloud-platform'
-axios.defaults.baseURL = 'http://10.33.213.232:8800/cloud-platform'
+axios.defaults.baseURL = 'http://118.25.85.198:8800/cloud-platform'
+// axios.defaults.baseURL = 'http://10.33.213.232:8800/cloud-platform'
 
 // axios.defaults.headers.common['Authorization'] = AUTH_TOKEN;
 // axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
@@ -20,7 +20,7 @@ const _axios = axios.create(config);
 
 _axios.interceptors.request.use(
   function(config) {
-    config.headers.Authorization = 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJhdXRob3JpdGllcyI6ImFkZF9kZXZpY2UgYWRkX2RldmljZV9kYXRhIGFkZF91c2VyIGNoZWNrX3VzZXIgZGVsZXRlX2RldmljZSBkZWxldGVfZGV2aWNlX2RhdGEgZXhwb3J0X2RldmljZV9kYXRhIGZpbmRfY29tbW9uX3VzZXJfYnJpZWZfaW5mbyBmaW5kX2RldmljZV9kYXRhIGZpbmRfZGV2aWNlX2xpc3QgZmluZF91c2VyIGltcG9ydF9kZXZpY2VfZGF0YSB1cGRhdGVfZGV2aWNlIHVwZGF0ZV9kZXZpY2VfZGF0YSAiLCJpYXQiOjE2MDY0NjgxMTIsInN1YiI6ImFkbWluMSIsImV4cCI6MTYwODE5NjExMn0.UPruCenBwR9YAH66YvRaM1Bjn8OXMtNywfaUxb6bpHzp1q97CBZUWtEiYR2MO0mhszqOzmKe8AUMhOtNCUJ2gA'
+    config.headers.Authorization = 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJhdXRob3JpdGllcyI6ImFkZF9kZXZpY2UgYWRkX2RldmljZV9kYXRhIGFkZF91c2VyIGNoZWNrX3VzZXIgZGVsZXRlX2RldmljZSBkZWxldGVfZGV2aWNlX2RhdGEgZXhwb3J0X2RldmljZV9kYXRhIGZpbmRfY29tbW9uX3VzZXJfYnJpZWZfaW5mbyBmaW5kX2RldmljZV9kYXRhIGZpbmRfZGV2aWNlX2xpc3QgZmluZF91c2VyIGltcG9ydF9kZXZpY2VfZGF0YSB1cGRhdGVfZGV2aWNlIHVwZGF0ZV9kZXZpY2VfZGF0YSAiLCJpYXQiOjE2MDY1NTEzODUsInN1YiI6ImFkbWluMSIsImV4cCI6MTYwODI3OTM4NX0.9crbtVok7R33NqACEoBPjt426LsmA99fIb9bCp2iGGABW7SoI8T28-ngXqOSpyrMMGw40H3Lf-wGUWQuSV2bhQ'
       || window.sessionStorage.getItem('token')
     return config;
   },
