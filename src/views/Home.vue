@@ -20,27 +20,32 @@
         <v-icon>mdi-open-in-new</v-icon>
       </v-btn>
     </v-app-bar>
-    <v-navigation-drawer permanent clipped app>
+    <v-navigation-drawer permanent clipped app width="200">
       <v-list
               dense
               nav
               rounded
       >
-        <v-list-item
-                v-for="item in items"
-                v-show="item.role.includes(getItem('roleName'))"
-                :key="item.title"
-                link
-                @click="$router.push(item.route)"
-        >
-          <v-list-item-icon>
-            <v-icon>{{ item.icon }}</v-icon>
-          </v-list-item-icon>
-
-          <v-list-item-content>
-            <v-list-item-title>{{ item.title }}</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
+	      <v-list-item-group
+		      v-model="selectedItem"
+		      color="primary"
+	      >
+		      <v-list-item
+			      v-for="item in items"
+			      v-show="item.role.includes(getItem('roleName'))"
+			      :key="item.title"
+			      link
+			      @click="$router.push(item.route)"
+		      >
+			      <v-list-item-icon>
+				      <v-icon>{{ item.icon }}</v-icon>
+			      </v-list-item-icon>
+			
+			      <v-list-item-content>
+				      <v-list-item-title>{{ item.title }}</v-list-item-title>
+			      </v-list-item-content>
+		      </v-list-item>
+	      </v-list-item-group>
       </v-list>
     </v-navigation-drawer>
     <transition name="puff-in-center" mode="out-in">
@@ -59,6 +64,7 @@ export default {
   },
   data () {
     return {
+	    selectedItem: 1,
       items: [
         { title: '首页', icon: 'mdi-view-dashboard', route: '/index', role: ['admin', 'user', 'regionalAgent']},
         { title: '账号信息', icon: 'mdi-account', route: '/account-information', role: ['admin', 'user', 'regionalAgent'] },

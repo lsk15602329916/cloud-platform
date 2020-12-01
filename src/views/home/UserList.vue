@@ -27,6 +27,10 @@
                 large>
               <template v-slot:item="{ item }">
                 <v-breadcrumbs-item
+	                      :style="{
+                	        color: item.disabled ? 'auto' : '#42A5F5',
+                	        cursor: item.disabled ? 'auto' : 'pointer',
+	                      }"
                         :disabled="item.disabled"
                         @click="handleBreadCrumbsClick(item)"
                 >
@@ -178,6 +182,7 @@
           {
             text: '用户列表',
             disabled: false,
+	          link: true,
           }
         ],
         // 列表索引
