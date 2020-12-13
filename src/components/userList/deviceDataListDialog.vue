@@ -123,6 +123,7 @@
     <v-dialog
             v-model="addDialog"
             max-width="800px"
+            v-if="getItem('roleName') === 'admin'"
     >
       <template v-slot:activator="{ on, attrs }">
         <v-btn

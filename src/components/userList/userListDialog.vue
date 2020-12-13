@@ -40,13 +40,12 @@
                 ></v-select>
               </v-col>
               <v-col
-                      v-if="addUserItem.roleId === 2"
+                      v-if="getItem('roleName') !== 'regionalAgent'"
                       cols="12"
                       sm="6"
                       md="4"
               >
                 <v-select
-                        v-if="getItem('roleName') !== 'regionalAgent'"
                         item-text="name"
                         item-value="userId"
                         v-model="addUserItem.superiorUserId"

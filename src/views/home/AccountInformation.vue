@@ -1,7 +1,22 @@
 <template>
-  <v-main>
-    <v-card>
-      <v-list dense>
+  <v-card>
+    <v-snackbar
+            v-model="snackbar"
+    >
+      {{ snackbarHint }}
+
+      <template v-slot:action="{ attrs }">
+        <v-btn
+                color="blue"
+                text
+                v-bind="attrs"
+                @click="snackbar = false"
+        >
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
+    <v-list dense>
         <v-list-item dense>
           <v-list-item-icon>
             <v-icon color="indigo">
@@ -180,24 +195,7 @@
           </v-list-item-content>
         </v-list-item>
       </v-list>
-    </v-card>
-    <v-snackbar
-            v-model="snackbar"
-    >
-      {{ snackbarHint }}
-
-      <template v-slot:action="{ attrs }">
-        <v-btn
-                color="blue"
-                text
-                v-bind="attrs"
-                @click="snackbar = false"
-        >
-          Close
-        </v-btn>
-      </template>
-    </v-snackbar>
-  </v-main>
+  </v-card>
 </template>
 
 <script>
@@ -236,9 +234,7 @@
               value => (value && /^1[3456789]\d{9}$/.test(value)) || '请输入正确的电话号码',]
           },
           {
-            label: '地址', icon: 'mdi-map-marker', key:'address', value: this.getItem('address') || '', rules: [
-              value => !!value || '必填',
-              value => (value && value.length >= 3) || '最小长度为3',]
+            label: '地址', icon: 'mdi-map-marker', key:'address', value: this.getItem('address') || '', rules: []
           },
           {
             label: '备注', icon: 'mdi-view-dashboard', key:'message', value: this.getItem('message') || '', rules: []
@@ -257,7 +253,6 @@
         if (!this.informationValid) {
           return
         }
-        console.log('okok')
         const form = {}
         const userInfo = ['userId', 'userNumber', 'username']
         for (let item of this.information) {
@@ -272,6 +267,7 @@
         // 预留信息
         form.reservedInfoList = this.reservedInfoList
         const { data: {data, code, message}} = await this.$axios.post('/user/updateUserInfo', form)
+        console.log('mess', message)
         this.showSnackbar(message)
       },
       async getAgentBriefInfoList() {

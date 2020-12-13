@@ -8,7 +8,7 @@
            @keydown.enter="handleLogin"
    >
      <v-card-title>
-       广州上腾云平台系统
+       上腾科技云平台
      </v-card-title>
      <v-card-text>
        <v-form v-model="valid">

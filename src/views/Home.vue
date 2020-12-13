@@ -8,10 +8,10 @@
     >
       <v-app-bar-nav-icon></v-app-bar-nav-icon>
       <v-toolbar-title style="width: 600px" class="ml-0 pl-4">
-        <span class="hidden-sm-and-down">广州上腾仪器设备有限公司仪器云平台管理系统</span>
+        <span class="hidden-sm-and-down">上腾科技云平台</span>
       </v-toolbar-title>
-
       <v-spacer></v-spacer>
+      你好，{{ getItem('username') }}
       <v-btn
               text
               @click="handleQuit"
