@@ -44,6 +44,20 @@
                   inset
                   vertical
           ></v-divider>
+          <div style="width: 100px"   v-if="listIndex === 0">
+            <v-select
+                    @change="handleUserListModeChange"
+                    class="mt-1"
+                    height="28px"
+                    :items="UserListModeItems"
+                    v-model="userListSearchMode"
+                    item-text="label"
+                    item-value="value"
+                    :value="1"
+                    hide-details
+                    label="选择搜索模式"
+            ></v-select>
+          </div>
           <div style="width: 80px"   v-if="listIndex === 2">
             <v-select
                     @change="handleModeChange"
@@ -75,7 +89,7 @@
           <v-text-field
                   v-model="search"
                   append-icon="mdi-magnify"
-                  @change="handleSearch"
+                  @keyup="handleSearch"
                   label="查询"
                   single-line
                   hide-details
@@ -113,7 +127,7 @@
                   class="mr-2"
                   @click="searchDeviceData(item)"
           >
-            mdi-book-search
+            mdi-cog-transfer
           </v-icon>
           <v-icon
                   @click="deleteDeviceItem(item)"
@@ -132,7 +146,7 @@
       {{ snackbarHint }}
       <template v-slot:action="{ attrs }">
         <v-btn
-                color="pink"
+                color="blue"
                 text
                 v-bind="attrs"
                 @click="snackbar = false"
@@ -292,6 +306,14 @@
         // mode Item
         modeItems: ['ALL', 'PLR', 'PDL', 'CPDL', 'OCC', 'VXXX', 'MFR'],
         resultJudgmentItems: ['ALL', 'Accept', 'Reject'],
+        UserListModeItems: [{
+          label: '用户姓名',
+          value: 1
+        }, {
+          label: '用户编号',
+          value: 0
+        }],
+        userListSearchMode: 1,
         searchMode: 'ALL',
         searchResultJudgment: 'ALL',
         // 列表操作
@@ -525,16 +547,21 @@
         this.searchResultJudgment = resultJudgment
         this.getDeviceData(1, this.searchMode, this.searchResultJudgment)
       },
+      async handleUserListModeChange() {
+        await this.handleSearch()
+      },
       async handleSearch() {
         switch (this.listIndex) {
           case 0:
-            const list1 = await this.getUserList(1, this.search, '', true)
-            const list2 = await this.getUserList(1, '', this.search, true)
-            console.log('list1', list1)
-            console.log('list2', list2)
-            const totalList = list1.concat(list2)
-            this.userList = totalList
-            this.total = totalList.length
+            let list = []
+            if (this.userListSearchMode) {
+               list = await this.getUserList(1, this.search, '', true)
+            } else {
+               list = await this.getUserList(1, '', this.search, true)
+            }
+
+            this.userList = list
+            this.total = list.length
             break
           case 1:
             break

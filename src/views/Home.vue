@@ -7,8 +7,8 @@
             clipped-left
     >
       <v-app-bar-nav-icon></v-app-bar-nav-icon>
-      <v-toolbar-title style="width: 300px" class="ml-0 pl-4">
-        <span class="hidden-sm-and-down">云平台</span>
+      <v-toolbar-title style="width: 600px" class="ml-0 pl-4">
+        <span class="hidden-sm-and-down">广州上腾仪器设备有限公司仪器云平台管理系统</span>
       </v-toolbar-title>
 
       <v-spacer></v-spacer>
@@ -40,7 +40,7 @@
 			      <v-list-item-icon>
 				      <v-icon>{{ item.icon }}</v-icon>
 			      </v-list-item-icon>
-			
+
 			      <v-list-item-content>
 				      <v-list-item-title>{{ item.title }}</v-list-item-title>
 			      </v-list-item-content>
@@ -64,26 +64,21 @@ export default {
   },
   data () {
     return {
-	    selectedItem: 1,
+	    selectedItem: 0,
       items: [
         { title: '首页', icon: 'mdi-view-dashboard', route: '/index', role: ['admin', 'user', 'regionalAgent']},
         { title: '账号信息', icon: 'mdi-account', route: '/account-information', role: ['admin', 'user', 'regionalAgent'] },
-        { title: '用户列表', icon: 'mdi-help-box', route: '/user-list', role: ['admin', 'regionalAgent']},
-        { title: '区域代理商', icon: 'mdi-help-box', route: '/regional-agents', role: ['admin']},
-        { title: '设备列表', icon: 'mdi-help-box', route: '/device-list', role: ['user'] },
+        { title: '用户列表', icon: 'mdi-card-account-details-outline', route: '/user-list', role: ['admin', 'regionalAgent']},
+        { title: '区域代理商', icon: 'mdi-view-carousel-outline', route: '/regional-agents', role: ['admin']},
+        { title: '设备列表', icon: 'mdi-view-carousel-outline', route: '/device-list', role: ['user'] },
       ],
       right: null,
     }
   },
   methods: {
     handleQuit() {
-      this.removeItem('roleName')
-        .removeItem('name')
-        .removeItem('userId')
-        .removeItem('userNumber')
-        .removeItem('username')
-        .removeItem('contact')
-        .removeItem('token')
+      window.sessionStorage.clear()
+      this.$store.commit('setReservedInfoList', [])
       this.$router.push('/login')
     }
   }

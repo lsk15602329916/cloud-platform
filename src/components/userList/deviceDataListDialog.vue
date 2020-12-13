@@ -251,6 +251,10 @@
           this.$axios.get('/deviceData/getResultJudgments')
           .then(({data}) => {
             // 表头
+            const resultJudgmentItems = data.data
+            console.log('index', resultJudgmentItems.indexOf('ALL'))
+            resultJudgmentItems.splice(resultJudgmentItems.indexOf('ALL'), 1)
+            console.log('items', resultJudgmentItems)
             this.resultJudgmentItems = data.data
           })
           .catch(err => {
@@ -373,8 +377,9 @@
       },
       async handleImportDeviceData() {
         const file = this.file
+        console.log('file', file)
         const formData = new FormData();
-        formData.append('uploadExcel', file[0])
+        formData.append('uploadExcel', file)
         formData.append('deviceId', this.currentDeviceId)
         this.$axios({method: 'post', url: '/deviceData/importDeviceData',
           data: formData,
@@ -384,6 +389,7 @@
         }).then(res => {
           const { data: {code, message}} = res
             if (!code) {
+              this.$emit('updateDeviceData')
               this.$emit('showSnackbar', message)
             }
           }

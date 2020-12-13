@@ -8,7 +8,7 @@
            @keydown.enter="handleLogin"
    >
      <v-card-title>
-       云平台系统
+       广州上腾云平台系统
      </v-card-title>
      <v-card-text>
        <v-form v-model="valid">
@@ -20,6 +20,7 @@
                  hide-details="auto"
          ></v-text-field>
          <v-text-field
+                 type="password"
                  v-model="password"
                  label="密码"
                  :rules="passwordRules"
@@ -90,14 +91,27 @@
           console.log('message', message)
           console.log('authorization', authorization)
           if (!code) {
-            const { roleName, user: {name, userId, userNumber, username, contact }} = data
-            this.saveItem('roleName', roleName)
-              .saveItem('name', name)
+            const { role, superiorUser, user: {name, userId, userNumber, username, contactInfo, contactPerson, address, reservedInfoList, message }} = data
+
+            this.saveItem('name', name)
               .saveItem('userId', userId)
               .saveItem('userNumber', userNumber)
               .saveItem('username', username)
-              .saveItem('contact', contact)
+              .saveItem('contactInfo', contactInfo)
+              .saveItem('contactPerson', contactPerson)
+              .saveItem('address', address)
+              .saveItem('message', message)
               .saveItem('token', authorization)
+
+            this.$store.commit('setReservedInfoList', reservedInfoList)
+            if (superiorUser) {
+              this.saveItem('superiorUserId', superiorUser.userId)
+                .saveItem('superiorUserName', superiorUser.name)
+            }
+            if (role) {
+              this.saveItem('roleName', role.roleName)
+                .saveItem('roleId', role.roleId)
+            }
 
             this.$router.push('/')
           } else {

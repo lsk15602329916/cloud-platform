@@ -109,11 +109,9 @@
         ],
         deviceName: [
           value => (value && value.length >= 1 && value.length <= 32) || '字符长度为 1~32',
-          value => !(/[^a-zA-Z0-9_]/.exec(value)) || '可使用数字、英文、下划线，不能包括特殊符号'
         ],
         message: [
           value => (value && value.length >= 1 && value.length <= 24) || '字符长度为 1~24',
-          value => !(/[^a-zA-Z0-9]/.exec(value)) || '需使用数字、英文，不能使用特殊符号'
         ]
       },
     }),

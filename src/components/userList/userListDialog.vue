@@ -106,7 +106,7 @@
               >
                 <v-text-field
                         v-model="addUserItem.name"
-                        label="用户姓名"
+                        label="客户名称"
                         :rules="rules.name"
                 ></v-text-field>
               </v-col>
@@ -116,9 +116,20 @@
                       md="4"
               >
                 <v-text-field
-                        v-model="addUserItem.contact"
-                        label="联系方式"
-                        :rules="rules.contact"
+                        v-model="addUserItem.contactPerson"
+                        label="联系人"
+                        :rules="rules.contactPerson"
+                ></v-text-field>
+              </v-col>
+              <v-col
+                      cols="12"
+                      sm="6"
+                      md="4"
+              >
+                <v-text-field
+                        v-model="addUserItem.contactInfo"
+                        label="联系电话"
+                        :rules="rules.contactInfo"
                 ></v-text-field>
               </v-col>
               <v-col
@@ -129,6 +140,7 @@
                 <v-text-field
                         v-model="addUserItem.address"
                         label="地址"
+                        :rules="rules.address"
                 ></v-text-field>
               </v-col>
             </v-row>
@@ -185,7 +197,8 @@
         password: '',
         confirmPassword: '',
         name: '',
-        contact: '',
+        contactPerson: '',
+        contactInfo: '',
         address: '',
         // 旗上区域代理商的id
         superiorUserId: '',
@@ -213,12 +226,15 @@
         name: [
           value => (value && value.length >= 1 && value.length <= 32) || '字符长度为 1~32',
         ],
-        contact: [
+        contactPerson: [
+          value => (value && value.length >= 1 && value.length <= 32) || '字符长度为 1~32',
+        ],
+        contactInfo: [
           value => (value && value.length >= 1 && value.length <= 24) || '字符长度为 1~24',
           value => (/^(((\+\d{2}-)?0\d{2,3}-\d{7,8})|((\+\d{2}-)?(\d{2,3}-)?([1][0-9][0-9]\d{8})))$/.exec(value)) || '请输入正确的电话号码'
         ],
         address: [
-
+          value => (value.length <= 128) || '字符长度为 0~128',
         ],
         message: [
           value => (value.length <= 128) || '字符长度为 0~128',
@@ -270,10 +286,14 @@
             addUserItem.superiorUserId = this.getItem('userId')
           }
 
-          const { data } = await this.$axios.post('/user/addUser', addUserItem)
-          this.addUserDialog = false
-          this.$emit('showSnackbar', '添加成功')
-          this.$emit('updateUser')
+          const { data: {code, message} } = await this.$axios.post('/user/addUser', addUserItem)
+          if (!code) {
+            this.addUserDialog = false
+            this.$emit('showSnackbar', '添加成功')
+            this.$emit('updateUser')
+          } else {
+            this.$emit('showSnackbar', message)
+          }
           console.log('data', data)
         } else {
           this.$emit('showSnackbar', message)
