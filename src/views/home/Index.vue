@@ -1,7 +1,9 @@
 <template>
-  <v-main>
+  <v-card
+    elevation="0"
+  >
     首页
-  </v-main>
+  </v-card>
 </template>
 
 <script>

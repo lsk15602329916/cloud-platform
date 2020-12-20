@@ -121,18 +121,22 @@
 
         <v-list-item dense v-if="getItem('roleName') === 'user'">
           <v-list-item-action></v-list-item-action>
-
-          <v-list-item-content>
-            <v-select
-                    item-text="name"
-                    item-value="userId"
-                    v-model="superiorUserId"
-                    :items="agentBriefInfoList"
-                    label="选择区域代理商"
-            ></v-select>
-          </v-list-item-content>
         </v-list-item>
         <v-form dense v-model="informationValid" v-if="getItem('roleName') !== 'admin'">
+          <v-list-item v-if="getItem('roleName') === 'user'">
+            <v-list-item-icon>
+            <v-icon color="indigo">
+              {{ superiorUser.icon }}
+            </v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-text-field
+                    :label="superiorUser.label"
+                    v-model="superiorUser.value"
+                    readonly
+            ></v-text-field>
+          </v-list-item-content>
+          </v-list-item>
          <v-list-item dense v-for="(item, index) in information"  :key="'i' + index">
           <v-list-item-icon>
             <v-icon color="indigo">
@@ -217,21 +221,24 @@
           value => (value && value.length >= 5 && value.length <= 12) || '字符长度为 5~12',
           value => !(/[^a-zA-Z0-9]/.exec(value)) || '需使用数字、英文，不能使用特殊符号'
         ],
+        superiorUser:{
+          label: '区域代理商', icon: 'mdi-account-key', value: this.getItem('superiorUserName') || ''
+        },
         information: [
           {
           label: '客户名称', icon: 'mdi-account-box', key:'name', value: this.getItem('name') || '', rules: [
             value => !!value || '必填',
-            value => (value && value.length >= 3) || '最小长度为3',]
+            value => (value && value.length >= 1 && value.length <= 32 ) || '字符长度为1~32',]
           },
           {
             label: '联系人', icon: 'mdi-account-details', key:'contactPerson', value:  this.getItem('contactPerson') || '', rules: [
               value => !!value || '必填',
-              value => (value && value.length >= 3) || '最小长度为3',]
+              value => (value && value.length >= 1 && value.length <= 32) || '字符长度为1~32',]
           },
           {
             label: '联系电话', icon: 'mdi-cellphone', key:'contactInfo', value: this.getItem('contactInfo') || '', rules: [
               value => !!value || '必填',
-              value => (value && /^1[3456789]\d{9}$/.test(value)) || '请输入正确的电话号码',]
+              value => (/^(((\+\d{2}-)?0\d{2,3}-\d{7,8})|((\+\d{2}-)?(\d{2,3}-)?([1][0-9][0-9]\d{8})))$/.exec(value)) || '请输入正确的电话号码']
           },
           {
             label: '地址', icon: 'mdi-map-marker', key:'address', value: this.getItem('address') || '', rules: []
@@ -244,9 +251,9 @@
       }
     },
     created() {
-      if (this.getItem('roleName') === 'user') {
-        this.getAgentBriefInfoList()
-      }
+      // if (this.getItem('roleName') === 'user') {
+      //   this.getAgentBriefInfoList()
+      // }
     },
     methods: {
       async updateUserInfo() {
@@ -267,8 +274,17 @@
         // 预留信息
         form.reservedInfoList = this.reservedInfoList
         const { data: {data, code, message}} = await this.$axios.post('/user/updateUserInfo', form)
-        console.log('mess', message)
+          this.saveItem('name', data.name)
+              .saveItem('userId', data.userId)
+              .saveItem('userNumber', data.userNumber)
+              .saveItem('username', data.username)
+              .saveItem('contactInfo', data.contactInfo)
+              .saveItem('contactPerson', data.contactPerson)
+              .saveItem('address', data.address)
+              .saveItem('message', data.message)
+        // console.log(data);
         this.showSnackbar(message)
+        console.log('mess', message)
       },
       async getAgentBriefInfoList() {
         const { data: { data }} = await this.$axios.get('/user/findRegionalAgentBriefInfo')

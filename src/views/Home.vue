@@ -62,9 +62,10 @@ export default {
   components: {
 
   },
+
   data () {
     return {
-	    selectedItem: 0,
+      selectedItem: 0,
       items: [
         { title: '首页', icon: 'mdi-view-dashboard', route: '/index', role: ['admin', 'user', 'regionalAgent']},
         { title: '账号信息', icon: 'mdi-account', route: '/account-information', role: ['admin', 'user', 'regionalAgent'] },
@@ -72,16 +73,44 @@ export default {
         { title: '区域代理商', icon: 'mdi-view-carousel-outline', route: '/regional-agents', role: ['admin']},
         { title: '设备列表', icon: 'mdi-view-carousel-outline', route: '/device-list', role: ['user'] },
       ],
+      router:[],
       right: null,
     }
+  },  
+  watch:{
+    $route(to,from){
+      this.selectedItem  = this.router.findIndex((res) => res===to.path)
+    }
+  },
+  created:function(){
+    
+  },
+  mounted:function(){
+    let arr = this.items
+    this.router=this.selectRouterArr(arr)
+    // console.log(this.router);
+    this.selectedItem=this.getItem('selectedItem')
+  },
+  updated:function(){
+    this.saveItem('selectedItem',this.selectedItem)
   },
   methods: {
     handleQuit() {
       window.sessionStorage.clear()
       this.$store.commit('setReservedInfoList', [])
       this.$router.push('/login')
+    },
+    selectRouterArr(arr) {
+      const router=[]
+      for(let item of arr){
+        if(item.role.includes(this.getItem('roleName'))){
+          router.push(item.route)
+        }
+      }
+      return router
     }
-  }
+  },
+  
 }
 </script>
 

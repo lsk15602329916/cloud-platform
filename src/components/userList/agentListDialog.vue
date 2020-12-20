@@ -13,12 +13,12 @@
               v-bind="attrs"
               v-on="on"
       >
-        新增用户
+        新增代理商
       </v-btn>
     </template>
     <v-card>
       <v-card-title>
-        <span class="headline">新增用户</span>
+        <span class="headline">新增代理商</span>
       </v-card-title>
 
       <v-card-text>
@@ -29,41 +29,12 @@
                       cols="12"
                       sm="6"
                       md="4"
-                      v-if="getItem('roleName') === 'admin'"
-              >
-                <v-select 
-                        item-text="roleDescription"
-                        item-value="roleId"
-                        v-model="addUserItem.roleId"
-                        :rules="rules.roleId"
-                        :items="roleList"
-                        label="选择角色"
-                ></v-select>
-              </v-col>
-              <v-col
-                      v-if="getItem('roleName') !== 'regionalAgent'"
-                      cols="12"
-                      sm="6"
-                      md="4"
-              >
-                <v-select
-                        item-text="name"
-                        item-value="userId"
-                        v-model="addUserItem.superiorUserId"
-                        :rules="rules.roleId"
-                        :items="agentBriefInfoList"
-                        label="选择区域代理商"
-                ></v-select>
-              </v-col>
-              <v-col
-                      cols="12"
-                      sm="6"
-                      md="4"
               >
                 <v-text-field
                         v-model="addUserItem.userNumber"
                         label="用户编号"
                         :rules="rules.userNumber"
+                        @blur="checkUserNumber"
                 ></v-text-field>
               </v-col>
               <v-col
@@ -191,7 +162,7 @@
       valid: false,
       // 添加用户数据格式
       addUserItem: {
-        roleId: '',
+        roleId: 3,
         userNumber: '',
         username: '',
         password: '',
@@ -259,24 +230,24 @@
           return '密码不一致'
         }
       },
-      async getRoleList() {
-        const { data: { data }} = await this.$axios.get('/role/findRole')
-        this.roleList = data
-      },
-      async getAgentBriefInfoList() {
-        const { data: { data }} = await this.$axios.get('/user/findRegionalAgentBriefInfo')
-        this.agentBriefInfoList = data
-        console.log('agent', this.agentBriefInfoList)
-      },
+      // async getRoleList() {
+      //   const { data: { data }} = await this.$axios.get('/role/findRole')
+      //   this.roleList = data
+      // },
+      // async getAgentBriefInfoList() {
+      //   const { data: { data }} = await this.$axios.get('/user/findRegionalAgentBriefInfo')
+      //   this.agentBriefInfoList = data
+      //   console.log('agent', this.agentBriefInfoList)
+      // },
       // Dialog 控制层
       closeAddUserDialog () {
         this.addUserDialog = false
-      },
-      async handleAddUser() {
-        if (!this.valid) {
-          this.$emit('showSnackbar', '请正确填写信息')
-          return
-        }
+        },
+          async handleAddUser() {
+          if (!this.valid) {
+            this.$emit('showSnackbar', '请正确填写信息')
+            return
+          }
         const { data: { code, message }} = await this.$axios.get('/user/checkUser',{ params: { username: this.addUserItem.username }})
         if(!code) {
           const addUserItem = this.addUserItem
@@ -299,6 +270,12 @@
           this.$emit('showSnackbar', message)
         }
       },
+      async checkUserNumber(){
+        const { data: { code, message }} = await this.$axios.post('/user/checkUserNumber',{data:{userNumber: this.addUserItem.userNumber} })
+        if(code) {
+          this.rules.uesrNumber.value='当前用户编号已存在'
+        }
+      }
     }
   }
 </script>

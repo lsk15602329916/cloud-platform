@@ -122,6 +122,18 @@
           >
             mdi-access-point
           </v-icon>
+          <v-icon
+                  class="mr-2"
+                  @click="deleteUser(item)"
+          >
+            mdi-delete
+          </v-icon>
+          <userModifyDialog 
+                :user-list="userList"
+                :edited-item="editedItem"
+
+          >
+          </userModifyDialog>
         </div>
         <div v-if="listIndex === 1">
           <v-icon
@@ -174,12 +186,14 @@
   import userListDialog from "../../components/userList/userListDialog"
   import deviceListDialog from "../../components/userList/deviceListDialog"
   import deviceDataListDialog from "../../components/userList/deviceDataListDialog"
+  import userModifyDialog from "../../components/userList/userModifyDialog"
   export default {
     name: "UserList",
     components: {
       userListDialog,
       deviceListDialog,
-      deviceDataListDialog
+      deviceDataListDialog,
+      userModifyDialog
     },
     data() {
       return {
@@ -187,6 +201,8 @@
         lastPn: 1,
         currentUserId: -1,
         currentDeviceId: -1,
+        currentUserName:null,
+        currentDeviceName: null,
         // 表格
         tableOptions: {
           page: 1,
@@ -210,7 +226,7 @@
             value: 'userNumber',
           },
           { text: '用户名称', value: 'name', sortable: false },
-          { text: '联系方式', value: 'contact', sortable: false },
+          { text: '联系方式', value: 'contactInfo', sortable: false },
           { text: '备注', value: 'message', sortable: false },
           { text: '操作', value: 'actions', sortable: false },
         ],
@@ -341,11 +357,11 @@
             disabled: false,
           },
           {
-            text: '设备列表',
+            text: this.currentUserName?this.currentUserName+'-设备列表':'设备列表',
             disabled: false,
           },
           {
-            text: '设备数据',
+            text: this.currentDeviceName?this.currentDeviceName+'-设备数据':'设备数据',
             disabled: true
           }]
         switch (val) {
@@ -389,10 +405,11 @@
       async getRoleList() {
         const { data: { data }} = await this.$axios.get('/role/findRole')
         this.roleList = data
+        console.log('role',data);
       },
       async getAgentBriefInfoList() {
         const { data: { data }} = await this.$axios.get('/user/findRegionalAgentBriefInfo')
-        this.agentBriefInfoList = data
+        this.agentBriefInfoList = data;
       },
       // 新增 user
       async handleAddUser() {
@@ -410,15 +427,14 @@
             case 2:
               break
             case 3:
+              break
           }
           const { data } = await this.$axios.post('/user/addUser', addUserItem)
         } else {
           this.showSnackbar(message)
-
         }
       },
       // 获取用户列表
-
       async getUserList(pn = 1, userName = '', userNumber = '', searchMode = false){
         const { data: {data: {list , total}}} = await this.$axios.get('/user/findUser',{
           params: {
@@ -438,11 +454,19 @@
         this.deviceList = []
         this.editedIndex = this.userList.indexOf(item)
         this.editedItem = Object.assign({}, item)
+        console.log('editedItem', this.editedItem);
         this.listIndex = 1
+        this.currentUserName = this.editedItem.name
         await this.getDeviceList()
       },
+      //获取用户信息进行修改
+      async getUserMsg(item){
+        this.editedItem = Object.assign({}, item)
+        console.log(this.editedItem);
+      },
       async getDeviceList(pn = 1) {
-        this.currentUserId = this.editedItem.userId
+        this.currentUserId = this.editedItem.userId    
+        console.log(this.editedItem);
         const { data: { data: { list, total }}} = await this.$axios.get('/device/findDeviceList',{
           params: {
             pn,
@@ -461,19 +485,21 @@
         this.editedIndex = this.deviceList.indexOf(item)
         this.editedItem = Object.assign({}, item)
         this.currentDeviceId = item.deviceId
+        this.currentDeviceName=item.deviceName
         this.listIndex = 2
         await this.getDeviceData()
         console.log('item', item)
       },
-      async getDeviceData(pn = 1, testMode = 'ALL', resultJudgment = 'ALL', testedBarCode = this.search) {
+      async getDeviceData(pn = 1, testMode = 'ALL', resultJudgment = 'ALL', groupId = this.search) {
+        
         const { deviceId } = this.editedItem
         const { data, data: { data: { headers, pageInfo: { list, total }}}} = await this.$axios.get('/deviceData/findDeviceData',{ params: {
             pn,
             deviceId,
             testMode,
             resultJudgment,
-            testedBarCode,
-            groupId: ''
+            testedBarCode:'',
+            groupId
           }})
         this.deviceDataList = list
         console.log('list', total)
@@ -488,6 +514,22 @@
       deleteItemConfirm() {
         switch (this.listIndex) {
           case 0:
+            this.$axios.delete('/user/deleteUserByUserNumber',{
+                data: {
+                  userNumber:this.editedItem.userNumber
+                }
+              }).then((response) => {
+                console.log('response', response.data.code)
+                if (!response.data.code) {
+                  this.showSnackbar('删除成功')
+                } else {
+                  this.showSnackbar('删除失败')
+                }
+              })
+              .catch(res => {
+                this.showSnackbar('删除失败')
+              })
+              .finally(this.getUserList)
             break
           case 1:
             this.$axios.delete('/device/deleteDevice',{
@@ -511,9 +553,10 @@
         }
         this.deleteDialog = false
       },
-      deleteItem(item) {
+      deleteUser(item) {
         this.editedIndex = this.userList.indexOf(item)
         this.editedItem = Object.assign({}, item)
+        console.log(this.editedItem );
         this.deleteDialog = true
       },
 
