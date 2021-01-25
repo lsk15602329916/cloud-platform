@@ -23,28 +23,14 @@
 
       <v-card-text>
         <v-container>
-          <v-form v-model="valid">
+          <v-form v-model="valid" ref="form">
             <v-row>
-              <v-col
-                      cols="12"
-                      sm="6"
-                      md="4"
-                      v-if="getItem('roleName') === 'admin'"
-              >
-                <v-select 
-                        item-text="roleDescription"
-                        item-value="roleId"
-                        v-model="addUserItem.roleId"
-                        :rules="rules.roleId"
-                        :items="roleList"
-                        label="选择角色"
-                ></v-select>
-              </v-col>
               <v-col
                       v-if="getItem('roleName') !== 'regionalAgent'"
                       cols="12"
                       sm="6"
                       md="4"
+                      ref="form"
               >
                 <v-select
                         item-text="name"
@@ -64,6 +50,7 @@
                         v-model="addUserItem.userNumber"
                         label="用户编号"
                         :rules="rules.userNumber"
+                        @blur="checkUserNumber"
                 ></v-text-field>
               </v-col>
               <v-col
@@ -96,7 +83,7 @@
                 <v-text-field
                         v-model="addUserItem.confirmPassword"
                         label="确认密码"
-                        :rules="[handleVerifyPassword]"
+                        :rules="rules.confirmPassword.concat(passwordConfirmationRule)"
                 ></v-text-field>
               </v-col>
               <v-col
@@ -189,9 +176,10 @@
       addUserDialog: false,
       // 添加用户 - 表单是否验证
       valid: false,
+      isOnly:false,
       // 添加用户数据格式
       addUserItem: {
-        roleId: '',
+        roleId: 2,
         userNumber: '',
         username: '',
         password: '',
@@ -221,7 +209,7 @@
           value => !(/[^a-zA-Z0-9]/.exec(value)) || '需使用数字、英文，不能使用特殊符号'
         ],
         confirmPassword: [
-          value => (value && value === this.addUserItem.password) || '密码不一致',
+          value => (!!value) || '密码不一致',
         ],
         name: [
           value => (value && value.length >= 1 && value.length <= 32) || '字符长度为 1~32',
@@ -241,6 +229,7 @@
         ]
       },
     }),
+    props:["total"],
     watch: {
       addUserDialog(val) {
         if (val) {
@@ -250,15 +239,28 @@
           this.closeAddUserDialog()
         }
       },
+      // 'addUserItem.password'(){
+      //     this.handleVerifyPasswordConfirm(this.addUserItem.confirmPassword)
+      // }
+    },
+    computed:{
+      passwordConfirmationRule() {
+        if(this.addUserItem.password!==this.addUserItem.confirmPassword){
+          return () =>
+          this.addUserItem.password === this.addUserItem.confirmPassword || "密码不一致";
+        }
+      }
     },
     methods: {
-      handleVerifyPassword(value) {
-        if (value && value === this.addUserItem.password) {
-          return true
-        } else {
-          return '密码不一致'
-        }
-      },
+      // handleVerifyPasswordConfirm(value) {
+      //   // this.$refs.form.validate()
+      //   if (value && value === this.addUserItem.password) { 
+      //     return true
+      //   } else if(this.addUserItem.password.length!=0) {
+      //     console.log(value);
+      //     return '密码不一致'
+      //   }
+      // },
       async getRoleList() {
         const { data: { data }} = await this.$axios.get('/role/findRole')
         this.roleList = data
@@ -273,12 +275,13 @@
         this.addUserDialog = false
       },
       async handleAddUser() {
+        this.$refs.form.validate()
         if (!this.valid) {
           this.$emit('showSnackbar', '请正确填写信息')
           return
         }
         const { data: { code, message }} = await this.$axios.get('/user/checkUser',{ params: { username: this.addUserItem.username }})
-        if(!code) {
+        if(!code&&this.isOnly) {
           const addUserItem = this.addUserItem
           const { roleId } = addUserItem
           addUserItem.reservedInfos = ''
@@ -287,18 +290,29 @@
             addUserItem.superiorUserId = this.getItem('userId')
           }
           const { data: {code, message} } = await this.$axios.post('/user/addUser', addUserItem)
+          console.log(this.isOnly);
           if (!code) {
             this.addUserDialog = false
             this.$emit('showSnackbar', '添加成功')
-            this.$emit('updateUser')
+            let pn=Math.floor((this.total+1)/10)+1
+            this.$emit('updateUser',pn)
           } else {
             this.$emit('showSnackbar', message)
           }
           console.log('data', data)
         } else {
-          this.$emit('showSnackbar', message)
+          this.$emit('showSnackbar', "账号或用户编号已存在")
         }
       },
+      async checkUserNumber(){
+        const { data: { code, message }} = await this.$axios.post('/user/checkUserNumber',{userNumber: this.addUserItem.userNumber })
+        if(code) {
+          this.isOnly=false
+          this.$emit('showSnackbar', message)
+        }else{
+          this.isOnly=true
+        }
+      }
     }
   }
 </script>

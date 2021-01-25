@@ -4,21 +4,18 @@
           max-width="800px"
   >
     <template v-slot:activator="{ on, attrs }">
-      <v-btn
-              color="primary"
-              dark
-              class="mb-2"
-              width="200px"
-              medium
+      <v-icon
+              class="mr-2"
               v-bind="attrs"
               v-on="on"
+              @click="handleDeviceModify"
       >
-        新增设备
-      </v-btn>
+        mdi-cog
+      </v-icon>
     </template>
     <v-card>
       <v-card-title>
-        <span class="headline">新增设备</span>
+        <span class="headline">设备信息修改</span>
       </v-card-title>
 
       <v-card-text>
@@ -29,7 +26,7 @@
                       cols="24"
               >
                 <v-text-field
-                        v-model="addDeviceItem.deviceNumber"
+                        v-model="deviceItem.deviceNumber"
                         label="设备编号"
                         :rules="rules.deviceNumber"
                 ></v-text-field>
@@ -40,7 +37,7 @@
                       cols="24"
               >
                 <v-text-field
-                        v-model="addDeviceItem.deviceName"
+                        v-model="deviceItem.deviceName"
                         label="设备型号"
                         :rules="rules.deviceName"
                 ></v-text-field>
@@ -51,7 +48,7 @@
                       cols="24"
               >
                 <v-text-field
-                        v-model="addDeviceItem.message"
+                        v-model="deviceItem.message"
                         label="有关信息"
                         :rules="rules.message"
                 ></v-text-field>
@@ -73,7 +70,7 @@
         <v-btn
                 color="blue darken-1"
                 text
-                @click="handleAddDevice"
+                @click="handleModifyDevice"
         >
           确认
         </v-btn>
@@ -84,24 +81,20 @@
 
 <script>
   export default {
-    name: "userListDialog",
-    // props: {
-    //   currentUserId: {
-    //     type: Number,
-    //     require
-    //   }
-    // },
+    name: "deviceModifyDialog",
+    props: {
+      currentUserId: {
+        type: Number,
+        require
+      }
+    },
     data: () => ({
       deviceList: [],
       addDeviceDialog: false,
       // 添加用户 - 表单是否验证
       valid: false,
       // 添加用户数据格式
-      addDeviceItem: {
-        deviceNumber: '',
-        deviceName: '',
-        message: ''
-      },
+      deviceItem: {},
       rules: {
         deviceNumber: [
           value => (value && value.length >= 1 && value.length <= 32) || '字符长度为 1~32',
@@ -115,32 +108,32 @@
         ]
       },
     }),
-    props:["total","currentUserId"],
+    props:["deviceMsg"],
     watch: {
       addDeviceDialog(val) {
         val || this.closeAddDeviceDialog()
       },
     },
     methods: {
+      handleDeviceModify(){
+        let a = Object.assign({}, this.deviceMsg)
+        this.deviceItem=a
+        
+      },
       // Dialog 控制层
       closeAddDeviceDialog () {
         this.addDeviceDialog = false
       },
-      async handleAddDevice() {
+      async handleModifyDevice() {
         if (!this.valid) {
           this.$emit('showSnackbar', '请正确填写信息')
           return
         }
-        const { deviceNumber, deviceName, message, } = this.addDeviceItem
-        const { data: {code}} = await this.$axios.post('/device/addDevice', {
-          userId: this.currentUserId,
-          deviceNumber,
-          deviceName,
-          message
-        })
-        !code && this.$emit('showSnackbar', '添加成功')
-        let pn=Math.floor((this.total+1)/10)+1
-        this.$emit('updateDevice',pn)
+        const deviceItem = this.deviceItem
+        console.log('1111',deviceItem);
+        const { data: {code}} = await this.$axios.post('device/updateDevice', deviceItem)
+        !code && this.$emit('showSnackbar', '修改成功')
+        this.$emit('updateDevice')
         this.closeAddDeviceDialog()
       },
     }

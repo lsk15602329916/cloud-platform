@@ -11,7 +11,7 @@
                 text
                 v-bind="attrs"
                 @click="snackbar = false"
-        >
+        >1
           Close
         </v-btn>
       </template>
@@ -199,6 +199,16 @@
           </v-list-item-content>
         </v-list-item>
       </v-list>
+    <v-footer
+      inset
+      fixed
+      style="z-index:100"
+      color="rgba(255, 255, 255)"
+      height="40px"
+      class="justify-center"
+    >
+      <a href="https://beian.miit.gov.cn" class="grey--text text--lighten-1 text-decoration-none text-caption">粤ICP备2020091671号</a>
+    </v-footer>
   </v-card>
 </template>
 
@@ -247,13 +257,18 @@
             label: '备注', icon: 'mdi-view-dashboard', key:'message', value: this.getItem('message') || '', rules: []
           }
         ],
-        reservedInfoList: this.$store.state.reservedInfoList
+        reservedInfoList: []
       }
     },
     created() {
       // if (this.getItem('roleName') === 'user') {
       //   this.getAgentBriefInfoList()
       // }
+    },
+    mounted(){
+        const reservedInfoList=this.getItem('reservedInfoList')
+        console.log(reservedInfoList)
+        this.reservedInfoList=JSON.parse(reservedInfoList)
     },
     methods: {
       async updateUserInfo() {
@@ -282,6 +297,7 @@
               .saveItem('contactPerson', data.contactPerson)
               .saveItem('address', data.address)
               .saveItem('message', data.message)
+              .saveItem('reservedInfoList', JSON.stringify(data.reservedInfoList))
         // console.log(data);
         this.showSnackbar(message)
         console.log('mess', message)

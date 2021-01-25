@@ -7,6 +7,7 @@
             :loading="isLoading"
             :server-items-length="total"
             :options.sync="tableOptions"
+            hide-default-footer
             @update:page="handlePageChange"
             :footer-props="{
               itemsPerPageOptions: [10]
@@ -86,7 +87,9 @@
                   inset
                   vertical
           ></v-divider>
-          <component :is="dialogComponent"
+          <component
+                    v-if="getItem('roleName') !== 'user'"
+                    :is="dialogComponent"
                      @showSnackbar="showSnackbar"
                      :currentDeviceId="currentDeviceId"
                      @updateDevice="getDeviceList"
@@ -113,6 +116,11 @@
         没有数据
       </template>
     </v-data-table>
+    <v-pagination
+          v-model="tableOptions.page"
+          class="my-4"
+          :length="Math.floor(total/10)+1"
+        ></v-pagination>
     <v-snackbar
             v-model="snackbar"
     >
@@ -139,6 +147,21 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-footer
+      inset
+      height="50px"
+    >
+    </v-footer>
+    <v-footer
+      fixed
+      inset
+      style="z-index:100"
+      color="rgba(255, 255, 255)"
+      height="40px"
+      class="justify-center"
+    >
+      <a href="https://beian.miit.gov.cn" class="grey--text text--lighten-1 text-decoration-none text-caption">粤ICP备2020091671号</a>
+    </v-footer>
   </v-card>
 </template>
 
@@ -404,7 +427,7 @@
       },
       async getDeviceList(pn = 1) {
         this.currentUserId = this.getItem('userId')   
-        console.log(this.editedItem);
+        // console.log(this.editedItem);
         const { data: { data: { list, total }}} = await this.$axios.get('/device/findDeviceList',{
           params: {
             pn,

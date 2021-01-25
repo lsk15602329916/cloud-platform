@@ -4,8 +4,8 @@ import Vue from 'vue';
 import axios from "axios";
 
 // Full config:  https://github.com/axios/axios#request-config
-// axios.defaults.baseURL = 'http://118.25.85.198:8800/cloud-platform'
-axios.defaults.baseURL = 'http://192.168.1.108:8800/cloud-platform'
+axios.defaults.baseURL = 'http://47.93.19.109:8800'
+    // axios.defaults.baseURL = 'http://192.168.1.103:8800'
 
 // axios.defaults.headers.common['Authorization'] = AUTH_TOKEN;
 // axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';

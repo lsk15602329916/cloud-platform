@@ -8,6 +8,7 @@
               class="mr-2"
               v-bind="attrs"
               v-on="on"
+              @click="handleUserModify"
       >
         mdi-account-cog
       </v-icon>
@@ -27,7 +28,7 @@
                       md="4"
               >
                 <v-text-field
-                        v-model="userList[1].name"
+                        v-model="userItem.name"
                         label="客户名称"
                         :rules="rules.name"
                 ></v-text-field>
@@ -77,14 +78,13 @@
                 ></v-text-field>
               </v-col>
             </v-row>
-            <v-row v-for="(item,index) in userItem.reservedInfoList" :key="index"> 
+            <v-row  dense v-for="(item,index) in reservedInfoList" :key="'r'+index"> 
                   <v-col
                       cols="24"
               >
                 <v-text-field
-                        v-model="userItem.message"
+                        v-model="reservedInfoList[index]"
                         :label="'预留信息'+ (index+1)"
-                        :rules="rules.message"
                 ></v-text-field>
               </v-col>
             </v-row>
@@ -95,9 +95,16 @@
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn
+                    color="blue darken-1"
+                    text
+                    @click="addReservedInformation"
+                >
+                  新增预留信息
+                </v-btn>
+        <v-btn
                 color="blue darken-1"
                 text
-                @click="closeAddUserDialog"
+                @click="closeUserModifyDialog"
         >
           取消
         </v-btn>
@@ -115,7 +122,7 @@
 
 <script>
   export default {
-    name: "userListDialog",
+    name: "userModifyDialog",
     data: () => ({
       roleList: [],
       agentBriefInfoList: [],
@@ -123,15 +130,8 @@
       // 添加用户 - 表单是否验证
       valid: false,
       // 添加用户数据格式
-      userItem: {
-        name: '',
-        contactPerson: '',
-        contactInfo: '',
-        address: '',
-        // 旗上区域代理商的id
-        message: '',
-
-      },
+      userItem: {},
+      reservedInfoList:[],
       rules: {
         name: [
           value => (value && value.length >= 1 && value.length <= 32) || '字符长度为 1~32',
@@ -151,27 +151,32 @@
         ]
       },
     }),
-    props:["userList","editedItem"],
-    mounted:function(){
-    },
+    props:["editedItem"],
     watch: {
-      addUserDialog(val) {
+      userModifyDialog(val) {
         if (val) {
-          this.getRoleList()
-          this.getAgentBriefInfoList()
+          // this.getRoleList()
+          // this.getAgentBriefInfoList()
         } else {
-          this.closeAddUserDialog()
+          this.closeUserModifyDialog()
         }
       },
     },
     methods: {
-      handleVerifyPassword(value) {
-        if (value && value === this.userItem.password) {
-          return true
-        } else {
-          return '密码不一致'
-        }
+      handleUserModify(){
+          let a = Object.assign({}, this.editedItem)
+          this.userItem=a
+          console.log(this.userItem);
+          this.reservedInfoList=a.reservedInfoList
+          console.log(this.reservedInfoList);
       },
+      // handleVerifyPassword(value) {
+      //   if (value && value === this.userItem.password) {
+      //     return true
+      //   } else {
+      //     return '密码不一致'
+      //   }
+      // },
     //   async getRoleList() {
     //     const { data: { data }} = await this.$axios.get('/role/findRole')
     //     this.roleList = data
@@ -182,25 +187,37 @@
     //     console.log('agent', this.agentBriefInfoList)
     //   },
       // Dialog 控制层
-      closeAddUserDialog () {
+      closeUserModifyDialog () {
         this.addUserDialog = false
       },
         async updateUserInfo() {
         if (!this.valid) {
           return
         }
-        const userInfo = ['userId', 'userNumber', 'username']
-        for (let item of userInfo) {
-          form[item] = this.getItem(item)
-        }
-        if (this.getItem('roleName') === 'user') {
-          form.superiorUserId = this.superiorUserId
-        }
+        const userItem=this.userItem
+        // for (let item of userInfo) {
+        //   form[item] = this.getItem(item)
+        // }
+        // if (this.getItem('roleName') === 'user') {
+        //   form.superiorUserId = this.superiorUserId
+        // }
         // 预留信息
-        userItem.reservedInfoList = this.reservedInfoList
+
+        // for(let item of this.userItem.reservedInfoList){
+        //   if(item.length!==0){
+        //     reservedInfoList.push(item)
+        //   }
+        // }
+        // userItem.reservedInfoList = reservedInfoList
+        userItem.reservedInfoList=this.reservedInfoList
+        console.log(userItem.reservedInfoList);
         const { data: {data, code, message}} = await this.$axios.post('/user/updateUserInfo', userItem)
+        if(!code){
+          this.addUserDialog = false
+            this.$emit('showSnackbar', '信息修改成功')
+            this.$emit('updateUser')
+        }
         // console.log(data);
-        this.showSnackbar(message)
         console.log('mess', message)
       },
       async getAgentBriefInfoList() {
@@ -212,10 +229,6 @@
         if ( this.reservedInfoList.length < 8) {
           this.reservedInfoList.push('')
         }
-      },
-      showSnackbar(message) {
-        this.snackbar = true
-        this.snackbarHint = message
       },
     }
   }

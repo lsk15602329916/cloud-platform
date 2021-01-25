@@ -7,6 +7,7 @@
             :loading="isLoading"
             :server-items-length="total"
             :options.sync="tableOptions"
+            hide-default-footer
             @update:page="handlePageChange"
             :footer-props="{
               itemsPerPageOptions: [10]
@@ -101,16 +102,18 @@
                   vertical
           ></v-divider>
           <component :is="dialogComponent"
+                      class="d-flex flex-nowrap"
                      @showSnackbar="showSnackbar"
                      :currentDeviceId="currentDeviceId"
                      :currentUserId="currentUserId"
                      @updateDevice="getDeviceList"
                      @updateDeviceData="getDeviceData"
                      @updateUser="getUserList"
+                     :total="total"
           ></component>
         </v-toolbar>
       </template>
-      <template v-slot:item.actions="{ item }">
+      <template v-slot:[`item.actions`]="{ item }">
         <div v-if="listIndex === 0">
           <v-icon
                   class="mr-2"
@@ -129,9 +132,9 @@
             mdi-delete
           </v-icon>
           <userModifyDialog 
-                :user-list="userList"
-                :edited-item="editedItem"
-
+                :editedItem="item"
+                @showSnackbar="showSnackbar"
+                @updateUser="getUserList"
           >
           </userModifyDialog>
         </div>
@@ -143,16 +146,28 @@
             mdi-cog-transfer
           </v-icon>
           <v-icon
+                  class="mr-2"
                   @click="deleteDeviceItem(item)"
           >
             mdi-delete
           </v-icon>
+          <deviceModifyDialog
+                :deviceMsg="item"
+                @showSnackbar="showSnackbar"
+                @updateDevice="getDeviceList"
+          ></deviceModifyDialog>
         </div>
       </template>
       <template v-slot:no-data>
         没有数据
       </template>
     </v-data-table>
+    <v-pagination
+              v-model="tableOptions.page"
+              class="my-4"
+              :length="(total/10)%1==0?total/10:Math.floor(total/10)+1"
+              :total-visible="10"
+            ></v-pagination>
     <v-snackbar
             v-model="snackbar"
     >
@@ -179,6 +194,21 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-footer
+      inset
+      height="50px"
+    >
+    </v-footer>
+    <v-footer
+      fixed
+      inset
+      style="z-index:100"
+      color="rgba(255, 255, 255)"
+      height="40px"
+      class="justify-center"
+    >
+      <a href="https://beian.miit.gov.cn" class="grey--text text--lighten-1 text-decoration-none text-caption">粤ICP备2020091671号</a>
+    </v-footer>
   </v-card>
 </template>
 
@@ -187,13 +217,15 @@
   import deviceListDialog from "../../components/userList/deviceListDialog"
   import deviceDataListDialog from "../../components/userList/deviceDataListDialog"
   import userModifyDialog from "../../components/userList/userModifyDialog"
+  import deviceModifyDialog from "../../components/userList/deviceModifyDialog"
   export default {
     name: "UserList",
     components: {
       userListDialog,
       deviceListDialog,
       deviceDataListDialog,
-      userModifyDialog
+      userModifyDialog,
+      deviceModifyDialog
     },
     data() {
       return {
@@ -220,11 +252,8 @@
         listIndex: 0,
         // 表头
         userHeaders: [
-          {
-            text: '用户编号',
-            align: 'start',
-            value: 'userNumber',
-          },
+          { text: '用户账号', align: 'start',value: 'username', sortable: false},
+          { text: '用户编号', value: 'userNumber', sortable: false},
           { text: '用户名称', value: 'name', sortable: false },
           { text: '联系方式', value: 'contactInfo', sortable: false },
           { text: '备注', value: 'message', sortable: false },
@@ -324,7 +353,7 @@
         modeItems: ['ALL', 'PLR', 'PDL', 'CPDL', 'OCC', 'VXXX', 'MFR'],
         resultJudgmentItems: ['ALL', 'Accept', 'Reject'],
         UserListModeItems: [{
-          label: '用户姓名',
+          label: '用户名称',
           value: 1
         }, {
           label: '用户编号',
@@ -336,6 +365,9 @@
         // 列表操作
         editedIndex: -1,
         editedItem: null,
+        //保存请求页数
+        userPn:1,
+        devicePn:1
       }
     },
     watch: {
@@ -435,7 +467,10 @@
         }
       },
       // 获取用户列表
-      async getUserList(pn = 1, userName = '', userNumber = '', searchMode = false){
+      async getUserList(pn = this.userPn, userName = '', userNumber = '', searchMode = false){
+        console.log();
+        this.tableOptions.page=pn
+        this.userPn=pn
         const { data: {data: {list , total}}} = await this.$axios.get('/user/findUser',{
           params: {
             loginUserId: this.getItem('userId'),
@@ -446,6 +481,7 @@
           }
         })
         searchMode || (this.userList = list)
+        console.log(list);
         this.total = total
         return list
       },
@@ -464,14 +500,15 @@
         this.editedItem = Object.assign({}, item)
         console.log(this.editedItem);
       },
-      async getDeviceList(pn = 1) {
-        this.currentUserId = this.editedItem.userId    
+      async getDeviceList(pn = this.devicePn,deviceName=this.search) {
+        this.currentUserId = this.editedItem.userId
+        this.devicePn=pn   
         console.log(this.editedItem);
         const { data: { data: { list, total }}} = await this.$axios.get('/device/findDeviceList',{
           params: {
             pn,
-            deviceNumber: '',
-            deviceName: '',
+            deviceNumber:'',
+            deviceName,
             userId: this.currentUserId
           }
         })
@@ -605,9 +642,10 @@
             }
 
             this.userList = list
-            this.total = list.length
+            // this.total = list.length
             break
           case 1:
+            this.getDeviceList(1, this.search)
             break
           case 2:
             this.getDeviceData(1, this.searchMode, this.searchResultJudgment, this.search)
@@ -616,7 +654,7 @@
       },
       searchSN(str) {
         this.getDeviceData(1, this.searchMode, this.searchResultJudgment, this.search)
-      }
+      },
     }
   }
 </script>

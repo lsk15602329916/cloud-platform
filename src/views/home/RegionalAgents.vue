@@ -7,6 +7,7 @@
             :loading="isLoading"
             :server-items-length="total"
             :options.sync="tableOptions"
+            hide-default-footer
             @update:page="handlePageChange"
             :footer-props="{
               itemsPerPageOptions: [10]
@@ -89,16 +90,29 @@
       </template>
       <template v-slot:item.actions="{ item }">
         <div v-if="listIndex === 0">
-          <v-icon
+          <!-- <v-icon
                   class="mr-2"
                   @click="searchUserDevice(item)"
           >
             mdi-book-search
-          </v-icon>
+          </v-icon> -->
           <v-icon
+            class="mr-2"
           >
             mdi-access-point
           </v-icon>
+          <v-icon
+                  class="mr-2"
+                  @click="deleteItem(item)"
+          >
+            mdi-delete
+          </v-icon>
+          <userModifyDialog 
+                :editedItem="item"
+                @showSnackbar="showSnackbar"
+                @updateUser="getAgentList"
+          >
+          </userModifyDialog>
         </div>
         <!-- <div v-if="listIndex === 1">
           <v-icon
@@ -118,6 +132,12 @@
         没有数据
       </template>
     </v-data-table>
+    <v-pagination
+          v-model="tableOptions.page"
+          class="my-4"
+          :length="(total/10)%1==0?total/10:Math.floor(total/10)+1"
+          :total-visible="10"
+        ></v-pagination>
     <v-snackbar
             v-model="snackbar"
     >
@@ -144,6 +164,21 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-footer
+      inset
+      height="50px"
+    >
+    </v-footer>
+    <v-footer
+      fixed
+      inset
+      style="z-index:100"
+      color="rgba(255, 255, 255)"
+      height="40px"
+      class="justify-center"
+    >
+      <a href="https://beian.miit.gov.cn" class="grey--text text--lighten-1 text-decoration-none text-caption">粤ICP备2020091671号</a>
+    </v-footer>
   </v-card>
 </template>
 
@@ -151,12 +186,14 @@
   import agentListDialog from "../../components/userList/agentListDialog"
   import deviceListDialog from "../../components/userList/deviceListDialog"
   import deviceDataListDialog from "../../components/userList/deviceDataListDialog"
+  import userModifyDialog from "../../components/userList/userModifyDialog"
   export default {
     name: "RegionalAgents",
     components: {
       agentListDialog,
       deviceListDialog,
-      deviceDataListDialog
+      deviceDataListDialog,
+      userModifyDialog
     },
     data() {
       return {
@@ -164,8 +201,6 @@
         lastPn: 1,
         currentUserId: -1,
         currentDeviceId: -1,
-        currentUserName:null,
-        currentDeviceName: null,
         // 表格
         tableOptions: {
           page: 1,
@@ -396,6 +431,22 @@
       deleteItemConfirm() {
         switch (this.listIndex) {
           case 0:
+            this.$axios.delete('/user/deleteUserByUserNumber',{
+                data: {
+                  userNumber:this.editedItem.userNumber
+                }
+              }).then((response) => {
+                console.log('response', response.data.code)
+                if (!response.data.code) {
+                  this.showSnackbar('删除成功')
+                } else {
+                  this.showSnackbar('删除失败')
+                }
+              })
+              .catch(res => {
+                this.showSnackbar('删除失败')
+              })
+              .finally(this.getAgentList)
             break
           // case 1:
           //   this.$axios.delete('/device/deleteDevice',{
@@ -420,7 +471,7 @@
         this.deleteDialog = false
       },
       deleteItem(item) {
-        this.editedIndex = this.userList.indexOf(item)
+        this.editedIndex = this.agentList.indexOf(item)
         this.editedItem = Object.assign({}, item)
         this.deleteDialog = true
       },

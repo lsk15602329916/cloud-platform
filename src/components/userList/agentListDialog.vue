@@ -160,6 +160,8 @@
       addUserDialog: false,
       // 添加用户 - 表单是否验证
       valid: false,
+      // 检查usernumber是否唯一
+      isOnly:false,
       // 添加用户数据格式
       addUserItem: {
         roleId: 3,
@@ -212,11 +214,10 @@
         ]
       },
     }),
+    props:['total'],
     watch: {
       addUserDialog(val) {
         if (val) {
-          this.getRoleList()
-          this.getAgentBriefInfoList()
         } else {
           this.closeAddUserDialog()
         }
@@ -258,22 +259,25 @@
             addUserItem.superiorUserId = this.getItem('userId')
           }
           const { data: {code, message} } = await this.$axios.post('/user/addUser', addUserItem)
-          if (!code) {
+          if (!code&&this.isOnly) {
             this.addUserDialog = false
             this.$emit('showSnackbar', '添加成功')
-            this.$emit('updateUser')
+            let pn=Math.floor((this.total+1)/10)+1
+            this.$emit('updateUser',pn)
           } else {
             this.$emit('showSnackbar', message)
           }
           console.log('data', data)
         } else {
-          this.$emit('showSnackbar', message)
+          this.$emit('showSnackbar', "账号或用户编号已存在")
         }
       },
       async checkUserNumber(){
-        const { data: { code, message }} = await this.$axios.post('/user/checkUserNumber',{data:{userNumber: this.addUserItem.userNumber} })
+        const { data: { code, message }} = await this.$axios.post('/user/checkUserNumber',{userNumber: this.addUserItem.userNumber })
         if(code) {
-          this.rules.uesrNumber.value='当前用户编号已存在'
+          this.$emit('showSnackbar', message)
+        }else{
+          this.isOnly=true
         }
       }
     }

@@ -27,6 +27,7 @@
               rounded
       >
 	      <v-list-item-group
+          mandatory
 		      v-model="selectedItem"
 		      color="primary"
 	      >
@@ -51,6 +52,7 @@
     <transition name="puff-in-center" mode="out-in">
       <router-view style="padding: 15px"></router-view>
     </transition>
+
   </v-main>
 </template>
 
@@ -75,12 +77,13 @@ export default {
       ],
       router:[],
       right: null,
+
     }
   },  
   watch:{
     $route(to,from){
       this.selectedItem  = this.router.findIndex((res) => res===to.path)
-    }
+    },   
   },
   created:function(){
     
@@ -88,8 +91,8 @@ export default {
   mounted:function(){
     let arr = this.items
     this.router=this.selectRouterArr(arr)
-    // console.log(this.router);
-    this.selectedItem=this.getItem('selectedItem')
+    console.log(this.router);
+    this.selectedItem=Number(this.getItem('selectedItem'))
   },
   updated:function(){
     this.saveItem('selectedItem',this.selectedItem)
