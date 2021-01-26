@@ -67,7 +67,7 @@
                 <v-text-field
                         v-model="addUserItem.confirmPassword"
                         label="确认密码"
-                        :rules="[handleVerifyPassword]"
+                        :rules="rules.confirmPassword.concat(passwordConfirmationRule)"
                 ></v-text-field>
               </v-col>
               <v-col
@@ -194,7 +194,7 @@
           value => !(/[^a-zA-Z0-9]/.exec(value)) || '需使用数字、英文，不能使用特殊符号'
         ],
         confirmPassword: [
-          value => (value && value === this.addUserItem.password) || '密码不一致',
+          value => (!!value) || '密码不一致',
         ],
         name: [
           value => (value && value.length >= 1 && value.length <= 32) || '字符长度为 1~32',
@@ -223,14 +223,22 @@
         }
       },
     },
-    methods: {
-      handleVerifyPassword(value) {
-        if (value && value === this.addUserItem.password) {
-          return true
-        } else {
-          return '密码不一致'
+    computed:{
+      passwordConfirmationRule() {
+        if(this.addUserItem.password!==this.addUserItem.confirmPassword){
+          return () =>
+          this.addUserItem.password === this.addUserItem.confirmPassword || "密码不一致";
         }
-      },
+      }
+    },
+    methods: {
+      // handleVerifyPassword(value) {
+      //   if (value && value === this.addUserItem.password) {
+      //     return true
+      //   } else {
+      //     return '密码不一致'
+      //   }
+      // },
       // async getRoleList() {
       //   const { data: { data }} = await this.$axios.get('/role/findRole')
       //   this.roleList = data
@@ -250,7 +258,7 @@
             return
           }
         const { data: { code, message }} = await this.$axios.get('/user/checkUser',{ params: { username: this.addUserItem.username }})
-        if(!code) {
+        if(!code&&this.isOnly) {
           const addUserItem = this.addUserItem
           const { roleId } = addUserItem
           addUserItem.reservedInfos = ''
@@ -259,7 +267,7 @@
             addUserItem.superiorUserId = this.getItem('userId')
           }
           const { data: {code, message} } = await this.$axios.post('/user/addUser', addUserItem)
-          if (!code&&this.isOnly) {
+          if (!code) {
             this.addUserDialog = false
             this.$emit('showSnackbar', '添加成功')
             let pn=Math.floor((this.total+1)/10)+1
