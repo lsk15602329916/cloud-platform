@@ -122,6 +122,13 @@
             mdi-book-search
           </v-icon>
           <v-icon
+            v-if="item.onlineStatus==1"
+            color="green"
+          >
+            mdi-access-point
+          </v-icon>
+          <v-icon
+            v-else
           >
             mdi-access-point
           </v-icon>
@@ -214,6 +221,7 @@
 
 <script>
   import userListDialog from "../../components/userList/userListDialog"
+  import agentListDialog from "../../components/userList/agentListDialog"
   import deviceListDialog from "../../components/userList/deviceListDialog"
   import deviceDataListDialog from "../../components/userList/deviceDataListDialog"
   import userModifyDialog from "../../components/userList/userModifyDialog"
@@ -225,7 +233,8 @@
       deviceListDialog,
       deviceDataListDialog,
       userModifyDialog,
-      deviceModifyDialog
+      deviceModifyDialog,
+      agentListDialog
     },
     data() {
       return {
@@ -367,7 +376,8 @@
         editedItem: null,
         //保存请求页数
         userPn:1,
-        devicePn:1
+        devicePn:1,
+        daviceDataPn:1
       }
     },
     watch: {
@@ -412,7 +422,7 @@
     },
     computed: {
       dialogComponent() {
-        const dialogs = ['userListDialog', 'deviceListDialog', 'deviceDataListDialog']
+        const dialogs = ['userListDialog', 'deviceListDialog', 'deviceDataListDialog','agentListDialog']
         return dialogs[this.listIndex]
       },
       headers () {
@@ -468,7 +478,7 @@
       },
       // 获取用户列表
       async getUserList(pn = this.userPn, userName = '', userNumber = '', searchMode = false){
-        console.log();
+        this.isLoading=true
         this.tableOptions.page=pn
         this.userPn=pn
         const { data: {data: {list , total}}} = await this.$axios.get('/user/findUser',{
@@ -482,8 +492,14 @@
         })
         searchMode || (this.userList = list)
         console.log(list);
+        this.isLoading=false
         this.total = total
         return list
+      },
+      //获取用户信息进行修改
+      async getUserMsg(item){
+        this.editedItem = Object.assign({}, item)
+        console.log(this.editedItem);
       },
       // 获取设备列表
       async searchUserDevice(item) {
@@ -495,13 +511,10 @@
         this.currentUserName = this.editedItem.name
         await this.getDeviceList()
       },
-      //获取用户信息进行修改
-      async getUserMsg(item){
-        this.editedItem = Object.assign({}, item)
-        console.log(this.editedItem);
-      },
       async getDeviceList(pn = this.devicePn,deviceName=this.search) {
+        this.isLoading=true
         this.currentUserId = this.editedItem.userId
+        this.tableOptions.page=pn
         this.devicePn=pn   
         console.log(this.editedItem);
         const { data: { data: { list, total }}} = await this.$axios.get('/device/findDeviceList',{
@@ -512,6 +525,7 @@
             userId: this.currentUserId
           }
         })
+        this.isLoading=false
         this.deviceList = list
         this.total = total
         console.log('list', list)
@@ -527,8 +541,9 @@
         await this.getDeviceData()
         console.log('item', item)
       },
-      async getDeviceData(pn = 1, testMode = 'ALL', resultJudgment = 'ALL', groupId = this.search) {
-        
+      async getDeviceData(pn = this.daviceDataPn, testMode = 'ALL', resultJudgment = 'ALL', groupId = this.search) {
+        this.tableOptions.page=pn
+        this.daviceDataPn=pn
         const { deviceId } = this.editedItem
         const { data, data: { data: { headers, pageInfo: { list, total }}}} = await this.$axios.get('/deviceData/findDeviceData',{ params: {
             pn,

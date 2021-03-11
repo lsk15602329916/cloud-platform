@@ -23,7 +23,10 @@
 
       <v-card-text>
         <v-container>
-          <v-form v-model="valid">
+          <v-form 
+            v-model="valid" 
+            ref="form"
+          >
             <v-row>
               <v-col
                       cols="12"
@@ -251,8 +254,10 @@
       // Dialog 控制层
       closeAddUserDialog () {
         this.addUserDialog = false
+        console.log(this.total);
         },
-          async handleAddUser() {
+      async handleAddUser() {
+          this.$refs.form.validate()
           if (!this.valid) {
             this.$emit('showSnackbar', '请正确填写信息')
             return
@@ -271,6 +276,8 @@
             this.addUserDialog = false
             this.$emit('showSnackbar', '添加成功')
             let pn=Math.floor((this.total+1)/10)+1
+            console.log(this.total);
+            console.log(pn);
             this.$emit('updateUser',pn)
           } else {
             this.$emit('showSnackbar', message)

@@ -301,6 +301,12 @@
         // 列表操作
         editedIndex: -1,
         editedItem: null,
+        // 设备页数
+        devicePn:1,
+        // 设备数据页数
+        deviceDataPn:1,
+        // 是否请求数据
+        isLoading:false
       }
     },
     watch: {
@@ -425,20 +431,24 @@
         this.listIndex = 0
         await this.getDeviceList()
       },
-      async getDeviceList(pn = 1) {
-        this.currentUserId = this.getItem('userId')   
+      async getDeviceList(pn = this.devicePn,deviceName=this.search) {
+        this.currentUserId = this.getItem('userId')
+        this.isLoading=true   
         // console.log(this.editedItem);
+        this.tableOptions.page=pn
+        this.devicePn=pn
         const { data: { data: { list, total }}} = await this.$axios.get('/device/findDeviceList',{
           params: {
             pn,
             deviceNumber: '',
-            deviceName: '',
+            deviceName,
             userId: this.currentUserId
           }
         })
         this.deviceList = list
         this.total = total
         console.log('list', list)
+        this.isLoading=false
       },
       // 获取设备 Data
       async searchDeviceData(item) {
@@ -451,8 +461,10 @@
         await this.getDeviceData()
         console.log('item', item)
       },
-      async getDeviceData(pn = 1, testMode = 'ALL', resultJudgment = 'ALL', testedBarCode = this.search) {
-        
+      async getDeviceData(pn = this.deviceDataPn, testMode = 'ALL', resultJudgment = 'ALL', testedBarCode = this.search) {
+        this.tableOptions.page=pn
+        this.daviceDataPn=pn
+        this.isLoading=true
         const { deviceId } = this.editedItem
         const { data, data: { data: { headers, pageInfo: { list, total }}}} = await this.$axios.get('/deviceData/findDeviceData',{ params: {
             pn,
@@ -465,6 +477,7 @@
         this.deviceDataList = list
         console.log('list', total)
         this.total = total
+        this.isLoading=false
       },
       // 展示消息框
       showSnackbar(message) {
@@ -552,6 +565,7 @@
           //   this.total = list.length
           //   break
           case 0:
+            this.getDeviceList(1, this.search)
             break
           case 1:
             this.getDeviceData(1, this.searchMode, this.searchResultJudgment, this.search)

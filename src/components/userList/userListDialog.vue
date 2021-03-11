@@ -23,7 +23,10 @@
 
       <v-card-text>
         <v-container>
-          <v-form v-model="valid" ref="form">
+          <v-form 
+            v-model="valid" 
+            ref="form"
+          >
             <v-row>
               <v-col
                       v-if="getItem('roleName') !== 'regionalAgent'"
@@ -273,6 +276,7 @@
       // Dialog 控制层
       closeAddUserDialog () {
         this.addUserDialog = false
+        console.log(this.total);
       },
       async handleAddUser() {
         this.$refs.form.validate()

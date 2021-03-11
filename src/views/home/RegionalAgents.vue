@@ -21,6 +21,24 @@
                 flat
         >
           <v-toolbar-title>
+            <v-breadcrumbs
+                :items="breadcrumbsItems"
+                divider=">"
+                style="padding: 0!important;"
+                large>
+              <template v-slot:item="{ item }">
+                <v-breadcrumbs-item
+	                      :style="{
+                	        color: item.disabled ? 'auto' : '#42A5F5',
+                	        cursor: item.disabled ? 'auto' : 'pointer',
+	                      }"
+                        :disabled="item.disabled"
+                        @click="handleBreadCrumbsClick(item)"
+                >
+                  {{ item.text }}
+                </v-breadcrumbs-item>
+              </template>
+            </v-breadcrumbs>
           </v-toolbar-title>
           <v-divider
                   class="mx-4"
@@ -32,8 +50,8 @@
                     @change="handleUserListModeChange"
                     class="mt-1"
                     height="28px"
-                    :items="UserListModeItems"
-                    v-model="userListSearchMode"
+                    :items="AgentListModeItems"
+                    v-model="AgentListSearchMode"
                     item-text="label"
                     item-value="value"
                     :value="1"
@@ -41,18 +59,21 @@
                     label="选择搜索模式"
             ></v-select>
           </div>
-         <!-- <div style="width: 80px"   v-if="listIndex === 2">
+           <div style="width: 150px"   v-if="listIndex === 1">
             <v-select
-                    @change="handleModeChange"
+                    @change="handleUserListModeChange"
                     class="mt-1"
                     height="28px"
-                    :items="modeItems"
-                    value="ALL"
+                    :items="UserListModeItems"
+                    v-model="UserListSearchMode"
+                    item-text="label"
+                    item-value="value"
+                    :value="1"
                     hide-details
-                    label="选择模式"
+                    label="选择搜索模式"
             ></v-select>
           </div>
-          <div style="width: 80px"   v-if="listIndex === 2">
+          <!-- <div style="width: 80px"   v-if="listIndex === 2">
             <v-select
                     @change="handleResultJudgmentChange"
                     class="mt-1"
@@ -83,6 +104,7 @@
                   vertical
           ></v-divider>
           <component :is="dialogComponent"
+                     :total="total"
                      @showSnackbar="showSnackbar" 
                      @updateUser="getAgentList"
           ></component>
@@ -90,14 +112,22 @@
       </template>
       <template v-slot:item.actions="{ item }">
         <div v-if="listIndex === 0">
-          <!-- <v-icon
+          <v-icon
                   class="mr-2"
-                  @click="searchUserDevice(item)"
+                  @click="searchUser(item)"
           >
             mdi-book-search
-          </v-icon> -->
+          </v-icon>
           <v-icon
             class="mr-2"
+            v-if="item.onlineStatus==1"
+            color="green"
+          >
+            mdi-access-point
+          </v-icon>
+          <v-icon
+            class="mr-2"
+            v-else
           >
             mdi-access-point
           </v-icon>
@@ -114,19 +144,32 @@
           >
           </userModifyDialog>
         </div>
-        <!-- <div v-if="listIndex === 1">
-          <v-icon
+        <div v-if="listIndex === 1">
+          <!-- <v-icon
                   class="mr-2"
-                  @click="searchDeviceData(item)"
+                  @click="searchUser(item)"
           >
             mdi-cog-transfer
+          </v-icon> -->
+          <!-- <v-icon
+            class="mr-2"
+            v-if="item.onlineStatus==1"
+            color="green"
+          >
+            mdi-access-point
           </v-icon>
           <v-icon
-                  @click="deleteDeviceItem(item)"
+            class="mr-2"
+            v-else
+          >
+            mdi-access-point
+          </v-icon> -->
+          <v-icon
+                  @click="deleteUserItem(item)"
           >
             mdi-delete
           </v-icon>
-        </div> -->
+        </div>
       </template>
       <template v-slot:no-data>
         没有数据
@@ -184,6 +227,7 @@
 
 <script>
   import agentListDialog from "../../components/userList/agentListDialog"
+  import userListDialog from "../../components/userList/userListDialog"
   import deviceListDialog from "../../components/userList/deviceListDialog"
   import deviceDataListDialog from "../../components/userList/deviceDataListDialog"
   import userModifyDialog from "../../components/userList/userModifyDialog"
@@ -193,14 +237,16 @@
       agentListDialog,
       deviceListDialog,
       deviceDataListDialog,
-      userModifyDialog
+      userModifyDialog,
+      userListDialog
     },
     data() {
       return {
         isLoading: false,
         lastPn: 1,
-        currentUserId: -1,
+        currentAgentId: -1,
         currentDeviceId: -1,
+        currentAgentName:'',
         // 表格
         tableOptions: {
           page: 1,
@@ -223,14 +269,28 @@
             align: 'start',
             value: 'userNumber',
           },
+          {
+            text: '代理商账号',
+            value: 'username',
+            sortable: false
+          },
           { text: '代理商名称', value: 'name', sortable: false },
           { text: '联系方式', value: 'contactInfo', sortable: false },
 
           { text: '备注', value: 'message', sortable: false },
           { text: '操作', value: 'actions', sortable: false },
         ],
+        userHeader:[
+          { text: '用户账号', align: 'start',value: 'username', sortable: false},
+          { text: '用户编号', value: 'userNumber', sortable: false},
+          { text: '用户名称', value: 'name', sortable: false },
+          { text: '联系方式', value: 'contactInfo', sortable: false },
+          { text: '备注', value: 'message', sortable: false },
+          { text: '操作', value: 'actions', sortable: false },
+        ],
         // 列表
         agentList: [],
+        userList:[],
         // 添加用户 - 选择确实框 select
         roleList: [],
         // 添加用户 - 选择代理商 select
@@ -283,19 +343,29 @@
         addUserDialog: false,
         // 是否展示删除用户 Dialog
         deleteDialog: false,
-        UserListModeItems: [{
+        AgentListModeItems: [{
           label: '代理商名称',
           value: 1
         }, {
           label: '代理商编号',
           value: 0
         }],
-        userListSearchMode: 1,
+        AgentListSearchMode: 1,
+        UserListModeItems: [{
+          label: '用户名称',
+          value: 1
+        }, {
+          label: '用户编号',
+          value: 0
+        }],
+        UserListSearchMode: 1,
         searchMode: 'ALL',
         searchResultJudgment: 'ALL',
         // 列表操作
         editedIndex: -1,
         editedItem: null,
+        agentPn:1,
+        userPn:1
       }
     },
     watch: {
@@ -310,45 +380,41 @@
       deleteDialog (val) {
         val || this.closeDeleteDialog()
       },
-      // listIndex (val) {
-      //   const breadcrumbsItems = [
-      //     {
-      //       text: '用户列表',
-      //       disabled: false,
-      //     },
-      //     {
-      //       text: this.currentUserName?this.currentUserName+'-设备列表':'设备列表',
-      //       disabled: false,
-      //     },
-      //     {
-      //       text: this.currentDeviceName?this.currentDeviceName+'-设备数据':'设备数据',
-      //       disabled: true
-      //     }]
-      //   switch (val) {
-      //     case 0:
-      //       this.getUserList()
-      //       break
-      //     case 1:
-      //       this.getDeviceList()
-      //   }
-      //   breadcrumbsItems.forEach(item => {
-      //     item.disabled = false
-      //   })
-      //   breadcrumbsItems[this.listIndex].disabled = true
-      //   this.breadcrumbsItems = breadcrumbsItems.slice(0, this.listIndex + 1)
-      // }
+      listIndex (val) {
+        const breadcrumbsItems = [
+          {
+            text: '代理商列表',
+            disabled: false,
+          },
+          {
+            text: this.currentAgentName?this.currentAgentName+'-用户列表':'用户列表',
+            disabled: false,
+          }]
+        switch (val) {
+          case 0:
+            this.getAgentList()
+            break
+          case 1:
+            this.getUserList()
+        }
+        breadcrumbsItems.forEach(item => {
+          item.disabled = false
+        })
+        breadcrumbsItems[this.listIndex].disabled = true
+        this.breadcrumbsItems = breadcrumbsItems.slice(0, this.listIndex + 1)
+      }
     },
     computed: {
       dialogComponent() {
-        const dialogs = ['agentListDialog', 'deviceListDialog', 'deviceDataListDialog']
+        const dialogs = ['agentListDialog']
         return dialogs[this.listIndex]
       },
       headers () {
-        const headers = [this.agentHeaders]
+        const headers = [this.agentHeaders,this.userHeader]
         return headers[this.listIndex]
       },
       tableList() {
-        const list = [this.agentList]
+        const list = [this.agentList,this.userList]
         return list[this.listIndex]
       }
     },
@@ -395,7 +461,10 @@
         }
       },
       // 获取全部代理商信息      
-       async getAgentList(pn = 1, userName = '', userNumber = '', searchMode = false){
+       async getAgentList(pn = this.agentPn, userName = '', userNumber = '', searchMode = false){
+        this.isLoading=true
+        this.tableOptions.page=pn
+        this.agentPn=pn
         const { data: {data: {list , total}}} = await this.$axios.get('/user/findUser',{
           params: {
             loginUserId: this.getItem('userId'),
@@ -406,22 +475,39 @@
           }
         })
         searchMode || (this.agentList = list)
+        this.isLoading=false
         this.total = total
         console.log(list);
         return list
       },
-      // // 获取用户列表
-      // async getUserList(pn = 1, userName = '', userNumber = '', searchMode = false){
-      //   const { data: {data: {list , total}}} = await this.$axios.get('/user/findUser',{
-      //     params: {
-      //       token: this.getItem('token'),
-      //     }
-      //   })
-      //   searchMode || (this.userList = list)
-      //   this.total = total
-      //   console.log(list);
-      //   return list
-      // },
+      // 获取用户列表
+      async searchUser(item) {
+        this.deviceList = []
+        this.editedIndex = this.agentList.indexOf(item)
+        this.editedItem = Object.assign({}, item)
+        console.log('editedItem', this.editedItem);
+        this.listIndex = 1
+        this.currentAgentName = this.editedItem.name
+        this.currentAgentId = this.editedItem.userId
+        await this.getUserList()
+      },
+      async getUserList(currentPage = this.userPn,deviceName=this.search) {
+        this.isLoading=true
+        this.tableOptions.page=currentPage
+        this.userPn=currentPage   
+        console.log(this.editedItem);
+        const { data: { data: { list, total }}} = await this.$axios.get('/user/selectUserInfoBySuperiorId',{
+          params: {
+            userId: this.currentAgentId,
+            currentPage
+          }
+        })
+        this.isLoading=false
+        this.userList = list
+        console.log(this.userList);
+        this.total = total
+        console.log('list', list)
+      },
       // 展示消息框
       showSnackbar(message) {
         this.snackbar = true
@@ -448,25 +534,24 @@
               })
               .finally(this.getAgentList)
             break
-          // case 1:
-          //   this.$axios.delete('/device/deleteDevice',{
-          //     data: {
-          //       deviceId: this.editedItem.deviceId
-          //     }
-          //   })
-          //     .then((response) => {
-          //       console.log('response', response.data.code)
-          //       if (!response.data.code) {
-          //         this.showSnackbar('删除成功')
-          //       } else {
-          //         this.showSnackbar('删除失败')
-          //       }
-          //     })
-          //     .catch(res => {
-          //       this.showSnackbar('删除失败')
-          //     })
-          //     .finally(this.getDeviceList)
-          //   break
+          case 1:
+            this.$axios.delete('/user/deleteUserByUserNumber',{
+                data: {
+                  userNumber:this.editedItem.userNumber
+                }
+              }).then((response) => {
+                console.log('response', response.data.code)
+                if (!response.data.code) {
+                  this.showSnackbar('删除成功')
+                } else {
+                  this.showSnackbar('删除失败')
+                }
+              })
+              .catch(res => {
+                this.showSnackbar('删除失败')
+              })
+              .finally(this.getUserList)
+            break
         }
         this.deleteDialog = false
       },
@@ -475,7 +560,12 @@
         this.editedItem = Object.assign({}, item)
         this.deleteDialog = true
       },
-
+      deleteUserItem(item){
+        this.editedIndex = this.userList.indexOf(item)
+        // console.log(this.editedIndex);
+        this.editedItem = Object.assign({}, item)
+        this.deleteDialog = true
+      },
       // deleteDeviceItem(item) {
       //   this.editedIndex = this.userList.indexOf(item)
       //   this.editedItem = Object.assign({}, item)
@@ -490,12 +580,12 @@
         this.deleteDialog = false
       },
       // // 面包屑导航栏
-      // handleBreadCrumbsClick(item) {
-      //   this.listIndex = this.breadcrumbsItems.indexOf(item)
-      // },
+      handleBreadCrumbsClick(item) {
+        this.listIndex = this.breadcrumbsItems.indexOf(item)
+      },
       async handlePageChange(page) {
         this.isLoading = true
-        const methods = [this.getAgentList]
+        const methods = [this.getAgentList,this.getUserList]
         await methods[this.listIndex](page)
         this.isLoading = false
       },
@@ -511,19 +601,26 @@
         await this.handleSearch()
       },
       async handleSearch() {
+        let list = []
         switch (this.listIndex) {
           case 0:
-            let list = []
-            if (this.userListSearchMode) {
+            if (this.AgentListSearchMode) {
                list = await this.getAgentList(1, this.search, '', true)
             } else {
                list = await this.getAgentList(1, '', this.search, true)
             }
             this.agentList = list
-            this.total = list.length
+            // this.total = list.length
             break
-          // case 1:
-          //   break
+          case 1:
+            // let list = []
+            if (this.UserListSearchMode) {
+              //  list = await this.getAgentList(1, this.search, '', true)
+            } else {
+              //  list = await this.getAgentList(1, '', this.search, true)
+            }
+            this.UserList = list
+            break
           // case 2:
           //   this.getDeviceData(1, this.searchMode, this.searchResultJudgment, this.search)
           //   break

@@ -32,8 +32,7 @@
 		      color="primary"
 	      >
 		      <v-list-item
-			      v-for="item in items"
-			      v-show="item.role.includes(getItem('roleName'))"
+			      v-for="item in router"
 			      :key="item.title"
 			      link
 			      @click="$router.push(item.route)"
@@ -82,7 +81,8 @@ export default {
   },  
   watch:{
     $route(to,from){
-      this.selectedItem  = this.router.findIndex((res) => res===to.path)
+      console.log(this.router.findIndex((res) => res.route===to.path));
+      this.selectedItem  = this.router.findIndex((res) => res.route===to.path)
     },   
   },
   created:function(){
@@ -92,6 +92,7 @@ export default {
     let arr = this.items
     this.router=this.selectRouterArr(arr)
     console.log(this.router);
+    // console.log(this.router);
     this.selectedItem=Number(this.getItem('selectedItem'))
   },
   updated:function(){
@@ -107,7 +108,7 @@ export default {
       const router=[]
       for(let item of arr){
         if(item.role.includes(this.getItem('roleName'))){
-          router.push(item.route)
+          router.push(item)
         }
       }
       return router

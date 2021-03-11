@@ -28,6 +28,17 @@
                       md="4"
               >
                 <v-text-field
+                        v-model="agentName"
+                        label="所属代理商"
+                        disabled
+                ></v-text-field>
+              </v-col>
+              <v-col
+                      cols="12"
+                      sm="6"
+                      md="4"
+              >
+                <v-text-field
                         v-model="userItem.name"
                         label="客户名称"
                         :rules="rules.name"
@@ -132,6 +143,8 @@
       // 添加用户数据格式
       userItem: {},
       reservedInfoList:[],
+      // 用户所属代理商
+      agentName:'',
       rules: {
         name: [
           value => (value && value.length >= 1 && value.length <= 32) || '字符长度为 1~32',
@@ -157,6 +170,7 @@
         if (val) {
           // this.getRoleList()
           // this.getAgentBriefInfoList()
+        
         } else {
           this.closeUserModifyDialog()
         }
@@ -166,6 +180,7 @@
       handleUserModify(){
           let a = Object.assign({}, this.editedItem)
           this.userItem=a
+          this.getAgentInfo()
           console.log(this.userItem);
           this.reservedInfoList=a.reservedInfoList
           console.log(this.reservedInfoList);
@@ -219,6 +234,13 @@
         }
         // console.log(data);
         console.log('mess', message)
+      },
+      async getAgentInfo() {
+          const { data: { code, message,data }} = await this.$axios.get('/user/selectUserinfoByUserId',{ params: { userId: this.userItem.superiorUserId }})
+          if(!code){
+            this.agentName=data.name
+            console.log(this.agentName);
+          }
       },
       async getAgentBriefInfoList() {
         const { data: { data }} = await this.$axios.get('/user/findRegionalAgentBriefInfo')

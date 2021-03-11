@@ -5,6 +5,7 @@ import axios from "axios";
 
 // Full config:  https://github.com/axios/axios#request-config
 axios.defaults.baseURL = 'http://47.93.19.109:8800'
+    // axios.defaults.baseURL = 'http://wudonglong.free.idcfengye.com'
     // axios.defaults.baseURL = 'http://192.168.1.103:8800'
 
 // axios.defaults.headers.common['Authorization'] = AUTH_TOKEN;
