@@ -60,6 +60,20 @@
                     label="选择搜索模式"
             ></v-select>
           </div>
+          <div style="width: 100px"   v-if="listIndex === 1">
+            <v-select
+                    @change="handleDataListModeChange"
+                    class="mt-1"
+                    height="28px"
+                    :items="DeviceDataModeItems"
+                    v-model="deviceListSearchMode"
+                    item-text="label"
+                    item-value="value"
+                    :value="1"
+                    hide-details
+                    label="选择搜索模式"
+            ></v-select>
+          </div>
           <div style="width: 80px"   v-if="listIndex === 2">
             <v-select
                     @change="handleModeChange"
@@ -367,8 +381,16 @@
         }, {
           label: '用户编号',
           value: 0
-        }],
+        }],        
         userListSearchMode: 1,
+        DeviceDataModeItems:[{
+          label: '设备名称',
+          value: 1
+        },{
+          label: '设备编号',
+          value: 0
+        }],
+        deviceListSearchMode:1,
         searchMode: 'ALL',
         searchResultJudgment: 'ALL',
         // 列表操作
@@ -511,7 +533,7 @@
         this.currentUserName = this.editedItem.name
         await this.getDeviceList()
       },
-      async getDeviceList(pn = this.devicePn,deviceName=this.search) {
+      async getDeviceList(pn = this.devicePn,deviceName='',deviceNumber='') {
         this.isLoading=true
         this.currentUserId = this.editedItem.userId
         this.tableOptions.page=pn
@@ -520,15 +542,16 @@
         const { data: { data: { list, total }}} = await this.$axios.get('/device/findDeviceList',{
           params: {
             pn,
-            deviceNumber:'',
+            deviceNumber,
             deviceName,
             userId: this.currentUserId
           }
         })
-        this.isLoading=false
         this.deviceList = list
+        this.isLoading=false 
         this.total = total
         console.log('list', list)
+        // return list
       },
       // 获取设备 Data
       async searchDeviceData(item) {
@@ -574,6 +597,8 @@
                 console.log('response', response.data.code)
                 if (!response.data.code) {
                   this.showSnackbar('删除成功')
+                  let total =this.total - 1
+                  this.userPn=(total/10)%1==0?total/10:Math.floor(total/10)+1
                 } else {
                   this.showSnackbar('删除失败')
                 }
@@ -593,6 +618,8 @@
                 console.log('response', response.data.code)
                 if (!response.data.code) {
                   this.showSnackbar('删除成功')
+                  let total =this.total - 1
+                  this.devicePn=(total/10)%1==0?total/10:Math.floor(total/10)+1
                 } else {
                   this.showSnackbar('删除失败')
                 }
@@ -646,21 +673,30 @@
       async handleUserListModeChange() {
         await this.handleSearch()
       },
+      async handleDataListModeChange() {
+        await this.handleSearch()
+      },
       async handleSearch() {
+        let list = []
         switch (this.listIndex) {
           case 0:
-            let list = []
             if (this.userListSearchMode) {
                list = await this.getUserList(1, this.search, '', true)
             } else {
                list = await this.getUserList(1, '', this.search, true)
             }
-
+            console.log(list);
             this.userList = list
             // this.total = list.length
             break
           case 1:
-            this.getDeviceList(1, this.search)
+            if(this.deviceListSearchMode){
+              list = this.getDeviceList(1, this.search ,'')
+            }else{
+              list = this.getDeviceList(1, '',this.search)
+            }
+            console.log(list);
+            // this.deviceList = list
             break
           case 2:
             this.getDeviceData(1, this.searchMode, this.searchResultJudgment, this.search)

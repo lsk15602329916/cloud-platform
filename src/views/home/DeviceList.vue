@@ -105,11 +105,11 @@
           >
             mdi-cog-transfer
           </v-icon>
-          <v-icon
+          <!-- <v-icon
                   @click="deleteDeviceItem(item)"
           >
             mdi-delete
-          </v-icon>
+          </v-icon> -->
         </div>
       </template>
       <template v-slot:no-data>
@@ -488,8 +488,6 @@
       deleteItemConfirm() {
         switch (this.listIndex) {
           case 0:
-            break
-          case 1:
             this.$axios.delete('/device/deleteDevice',{
               data: {
                 deviceId: this.editedItem.deviceId
@@ -518,7 +516,7 @@
       },
 
       deleteDeviceItem(item) {
-        this.editedIndex = this.userList.indexOf(item)
+        this.editedIndex = this.deviceList.indexOf(item)
         this.editedItem = Object.assign({}, item)
         this.deleteDialog = true
       },

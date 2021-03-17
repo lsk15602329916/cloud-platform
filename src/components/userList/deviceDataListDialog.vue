@@ -174,6 +174,7 @@
                 <v-col
                         cols="6"
                         v-for="(item, index) in addOptions"
+                        :key="index"
                 >
                   <v-text-field
                           v-model="item.value"

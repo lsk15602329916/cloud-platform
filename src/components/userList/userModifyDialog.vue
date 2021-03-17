@@ -23,11 +23,12 @@
           <v-form v-model="valid">
             <v-row>
               <v-col
+                      v-if="userItem.superiorUserId"
                       cols="12"
                       sm="6"
                       md="4"
               >
-                <v-text-field
+                <v-text-field   
                         v-model="agentName"
                         label="所属代理商"
                         disabled

@@ -278,7 +278,7 @@
             let pn=Math.floor((this.total+1)/10)+1
             console.log(this.total);
             console.log(pn);
-            this.$emit('updateUser',pn)
+            this.$emit('updateAgent',pn)
           } else {
             this.$emit('showSnackbar', message)
           }

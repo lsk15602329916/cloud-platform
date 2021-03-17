@@ -33,7 +33,7 @@
                     v-model="updatePasswordDialog"
                     max-width="800px"
             >
-              <template v-slot:activator="{ on, attrs }">
+              <template v-slot:activator="{}">
                 <v-btn
                         color="error"
                         block
