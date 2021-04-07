@@ -4,6 +4,7 @@ import Vue from 'vue';
 import axios from "axios";
 
 // Full config:  https://github.com/axios/axios#request-config
+// axios.defaults.baseURL = 'http://192.168.1.102:8800'
 axios.defaults.baseURL = 'http://47.93.19.109:8800'
     // axios.defaults.baseURL = 'http://wudonglong.free.idcfengye.com'
     // axios.defaults.baseURL = 'http://172.20.10.3:8800'

@@ -74,7 +74,7 @@
                     label="选择搜索模式"
             ></v-select>
           </div>
-          <div style="width: 80px"   v-if="listIndex === 2">
+          <div style="width: 90px"   v-if="listIndex === 2">
             <v-select
                     @change="handleModeChange"
                     class="mt-1"
@@ -85,7 +85,7 @@
                     label="选择模式"
             ></v-select>
           </div>
-          <div style="width: 80px"   v-if="listIndex === 2">
+          <div style="width: 90px"   v-if="listIndex === 2">
             <v-select
                     @change="handleResultJudgmentChange"
                     class="mt-1"
@@ -105,7 +105,8 @@
           <v-text-field
                   v-model="search"
                   append-icon="mdi-magnify"
-                  @keyup="handleSearch"
+                  
+                  @input="handleSearch"
                   label="查询"
                   single-line
                   hide-details
@@ -296,7 +297,7 @@
           {
             text: '全球唯一ID',
             align: 'start',
-            value: 'deviceNumber',
+            value: 'dataId',
           },
           { text: '组号', value: 'groupId', sortable: false },
           { text: '日期', value: 'date', sortable: false },
@@ -312,6 +313,7 @@
           { text: '运行次数', value: 'runNumber', sortable: false },
           { text: '被测试条形码', value: 'testedBarCode', sortable: false },
           { text: '节拍输出', value: 'beatOutput', sortable: false },
+          { text: '预留项', value: 'reservedMessage', sortable: false }
         ],
         // 用户列表
         userList: [],
@@ -676,8 +678,9 @@
       async handleDataListModeChange() {
         await this.handleSearch()
       },
-      async handleSearch() {
-        let list = []
+      async handleSearch(e) {
+        if(/^(\w|-)+$/.test(e)||e.length===0) {
+          let list = []
         switch (this.listIndex) {
           case 0:
             if (this.userListSearchMode) {
@@ -702,6 +705,8 @@
             this.getDeviceData(1, this.searchMode, this.searchResultJudgment, this.search)
             break
         }
+        }      
+
       },
       searchSN(str) {
         this.getDeviceData(1, this.searchMode, this.searchResultJudgment, this.search)

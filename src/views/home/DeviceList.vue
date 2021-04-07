@@ -46,6 +46,20 @@
                   inset
                   vertical
           ></v-divider>
+          <div style="width: 100px"   v-if="listIndex === 0">
+            <v-select
+                    @change="handleDataListModeChange"
+                    class="mt-1"
+                    height="28px"
+                    :items="DeviceDataModeItems"
+                    v-model="deviceListSearchMode"
+                    item-text="label"
+                    item-value="value"
+                    :value="1"
+                    hide-details
+                    label="选择搜索模式"
+            ></v-select>
+          </div>
           <div style="width: 80px"   v-if="listIndex === 1">
             <v-select
                     @change="handleModeChange"
@@ -77,7 +91,7 @@
           <v-text-field
                   v-model="search"
                   append-icon="mdi-magnify"
-                  @keyup="handleSearch"
+                  @input="handleSearch"
                   label="查询"
                   single-line
                   hide-details
@@ -119,7 +133,7 @@
     <v-pagination
           v-model="tableOptions.page"
           class="my-4"
-          :length="Math.floor(total/10)+1"
+          :length="(total)%10===0?(total)/10:Math.floor((total)/10)+1"
         ></v-pagination>
     <v-snackbar
             v-model="snackbar"
@@ -284,7 +298,15 @@
         addUserDialog: false,
         // 是否展示删除用户 Dialog
         deleteDialog: false,
-
+        // 设备搜索模式
+        DeviceDataModeItems:[{
+          label: '设备名称',
+          value: 1
+        },{
+          label: '设备编号',
+          value: 0
+        }],
+        deviceListSearchMode:1,
         // mode Item
         modeItems: ['ALL', 'PLR', 'PDL', 'CPDL', 'OCC', 'VXXX', 'MFR'],
         resultJudgmentItems: ['ALL', 'Accept', 'Reject'],
@@ -431,7 +453,7 @@
         this.listIndex = 0
         await this.getDeviceList()
       },
-      async getDeviceList(pn = this.devicePn,deviceName=this.search) {
+      async getDeviceList(pn = this.devicePn,deviceName='',deviceNumber='') {
         this.currentUserId = this.getItem('userId')
         this.isLoading=true   
         // console.log(this.editedItem);
@@ -442,6 +464,7 @@
             pn,
             deviceNumber: '',
             deviceName,
+            deviceNumber,
             userId: this.currentUserId
           }
         })
@@ -538,6 +561,10 @@
         await methods[this.listIndex](page)
         this.isLoading = false
       },
+      handleDataListModeChange(){
+          this.search=''
+          this.getDeviceList()
+      },
       handleModeChange(mode) {
         this.searchMode = mode
         this.getDeviceData(1, this.searchMode, this.searchResultJudgment)
@@ -549,7 +576,8 @@
       async handleUserListModeChange() {
         await this.handleSearch()
       },
-      async handleSearch() {
+      async handleSearch(e) {
+        if(/^(\w|-)+$/.test(e)||e.length===0) {
         switch (this.listIndex) {
           // case 0:
           //   let list = []
@@ -563,11 +591,16 @@
           //   this.total = list.length
           //   break
           case 0:
-            this.getDeviceList(1, this.search)
+            if(this.deviceListSearchMode){
+                this.getDeviceList(1, this.search ,'')
+            }else{
+               this.getDeviceList(1, '',this.search)
+            } 
             break
           case 1:
             this.getDeviceData(1, this.searchMode, this.searchResultJudgment, this.search)
             break
+        }
         }
       },
       searchSN(str) {

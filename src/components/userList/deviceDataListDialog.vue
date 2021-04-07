@@ -193,7 +193,7 @@
           <v-btn
                   color="blue darken-1"
                   text
-                  @click="handleAddDeviceData"
+                  @click="addDeviceData"
           >
             确认
           </v-btn>
@@ -222,7 +222,7 @@
 
       // mode Item
       fileFormatItems: ['csv', 'xls'],
-      modeItems: ['PLR', 'PDL', 'CPDL', 'OCC', 'VXXX', 'MFR'],
+      modeItems: ['PLR', 'PDL', 'CPDL', 'OCC', 'VXXX', 'MFR', 'DPD', 'DPR', 'VDPD', 'VDPR', 'CDPD', 'CVDPD', 'VPLR', 'VPDL', 'CVPDL', 'VSFD', 'SPD', 'SPR', 'VSPD', 'VSPR'],
       resultJudgmentItems: ['Accept', 'Reject'],
       mode: '',
       resultJudgment: '',
@@ -243,6 +243,8 @@
         value => !!value || '必填',
         value => (value || '').length <= 20 || '长度不应超过 20 个字符',
       ],
+      // 节流
+      isThrottle:true
     }),
 
     watch: {
@@ -277,6 +279,7 @@
         this.addOptions = []
         const resultJudgment = this.resultJudgment
         const testMode = this.mode
+        console.log(testMode);
         if (!resultJudgment || !testMode) {
           return
         }
@@ -312,6 +315,21 @@
         } else {
           this.addOptions = []
         }
+      },
+      // 设置节流
+      addDeviceData(){
+          let that =this
+          if(!that.isThrottle){
+            return
+          }else{
+            that.isThrottle=false
+            setTimeout(()=>{
+                // this.handleAddDeviceData()
+                that.isThrottle=true   
+                // console.log(that.isThrottle);
+                that.handleAddDeviceData()         
+            },2000)
+          }
       },
       async handleAddDeviceData() {
 

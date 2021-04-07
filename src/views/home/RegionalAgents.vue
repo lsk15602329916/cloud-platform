@@ -107,7 +107,7 @@
           <v-text-field
                   v-model="search"
                   append-icon="mdi-magnify"
-                  @keyup="handleSearch"
+                  @input="handleSearch"
                   label="查询"
                   single-line
                   hide-details
@@ -793,7 +793,8 @@
       async handleDataListModeChange() {
         await this.handleSearch()
       },
-      async handleSearch() {
+      async handleSearch(e) {
+        if(/^(\w|-)+$/.test(e)||e.length===0) {
         let list = []
         switch (this.listIndex) {
           case 0:
@@ -821,6 +822,7 @@
               list = this.getDeviceList(1, '',this.search)
             }
             break
+        }
         }
       },
       searchSN(str) {

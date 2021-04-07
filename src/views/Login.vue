@@ -44,9 +44,10 @@
          {{ loginMessage }}
        </v-btn>
      </v-card-actions>
-    <v-footer
+   </v-card>
+       <v-footer
       fixed
-      inset=true
+      inset
       style="z-index:100"
       color="rgba(255, 0, 0, 0.01)"
       height="40px"
@@ -54,7 +55,6 @@
     >
       <a href="https://beian.miit.gov.cn" class="grey--text text--lighten-5 text-decoration-none text-caption">粤ICP备2020091671号</a>
     </v-footer>
-   </v-card>
   </v-main>
 </template>
 

@@ -139,7 +139,7 @@
           message
         })
         !code && this.$emit('showSnackbar', '添加成功')
-        let pn=Math.floor((this.total+1)/10)+1
+        let pn=(this.total+1)%10===0?(this.total+1)/10:Math.floor((this.total+1)/10)+1
         this.$emit('updateDevice',pn)
         this.closeAddDeviceDialog()
       },

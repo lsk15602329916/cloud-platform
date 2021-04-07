@@ -94,6 +94,7 @@ export default {
     console.log(this.router);
     // console.log(this.router);
     this.selectedItem=Number(this.getItem('selectedItem'))
+    this.unique([123,"webank",[1,2,3],"123",{a:1},"tencent",123,[1,2,3],{a:1}])
   },
   updated:function(){
     this.saveItem('selectedItem',this.selectedItem)

@@ -80,7 +80,7 @@
                                   type="password"
                                   v-model="confirmPassword"
                                   label="确认密码"
-                                  :rules="[handleVerifyPassword]"
+                                  :rules="confirmPasswordRules.concat(handleVerifyPassword)"
                           ></v-text-field>
                         </v-col>
                       </v-row>
@@ -231,6 +231,9 @@
           value => (value && value.length >= 5 && value.length <= 12) || '字符长度为 5~12',
           value => !(/[^a-zA-Z0-9]/.exec(value)) || '需使用数字、英文，不能使用特殊符号'
         ],
+        confirmPasswordRules: [
+          value => (!!value) || '密码不一致',
+        ],
         superiorUser:{
           label: '区域代理商', icon: 'mdi-account-key', value: this.getItem('superiorUserName') || ''
         },
@@ -264,6 +267,15 @@
       // if (this.getItem('roleName') === 'user') {
       //   this.getAgentBriefInfoList()
       // }
+    },
+    computed:{
+      handleVerifyPassword() {
+        // console.log(this.newPassword==this.confirmPassword);
+        if(this.newPassword!==this.confirmPassword){
+          return () =>
+          this.newPassword === this.confirmPassword || "密码不一致";
+        }
+      }
     },
     mounted(){
         const reservedInfoList=this.getItem('reservedInfoList')
@@ -342,13 +354,6 @@
           this.showSnackbar(message)
         }
       },
-      handleVerifyPassword(value) {
-        if (value && value === this.newPassword) {
-          return true
-        } else {
-          return '密码不一致'
-        }
-      }
     }
   }
 </script>
