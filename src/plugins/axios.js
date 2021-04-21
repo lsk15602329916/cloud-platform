@@ -4,7 +4,7 @@ import Vue from 'vue';
 import axios from "axios";
 
 // Full config:  https://github.com/axios/axios#request-config
-// axios.defaults.baseURL = 'http://192.168.1.102:8800'
+// axios.defaults.baseURL = 'http://192.168.1.110:8800'
 axios.defaults.baseURL = 'http://47.93.19.109:8800'
     // axios.defaults.baseURL = 'http://wudonglong.free.idcfengye.com'
     // axios.defaults.baseURL = 'http://172.20.10.3:8800'
@@ -22,6 +22,9 @@ const _axios = axios.create(config);
 
 _axios.interceptors.request.use(
     function(config) {
+        if (sessionStorage.getItem('token') == null) {
+            return config
+        }
         config.headers.Authorization = window.sessionStorage.getItem('token')
         return config;
     },

@@ -1,3 +1,4 @@
+// 用户列表
 <template>
   <v-card>
     <v-data-table
@@ -105,9 +106,18 @@
           <v-text-field
                   v-model="search"
                   append-icon="mdi-magnify"
-                  
+                  v-if="listIndex !== 2"
                   @input="handleSearch"
                   label="查询"
+                  single-line
+                  hide-details
+          ></v-text-field>
+                    <v-text-field
+                  v-model="search"
+                  append-icon="mdi-magnify"
+                  v-else
+                  @input="handleSearch"
+                  label="查询(通过被测试条形码)"
                   single-line
                   hide-details
           ></v-text-field>
@@ -121,6 +131,7 @@
                      @showSnackbar="showSnackbar"
                      :currentDeviceId="currentDeviceId"
                      :currentUserId="currentUserId"
+                     :currentGroupId="currentGroupId"
                      @updateDevice="getDeviceList"
                      @updateDeviceData="getDeviceData"
                      @updateUser="getUserList"
@@ -257,6 +268,7 @@
         lastPn: 1,
         currentUserId: -1,
         currentDeviceId: -1,
+        currentGroupId: -1,
         currentUserName:null,
         currentDeviceName: null,
         // 表格
@@ -363,20 +375,25 @@
           ],
           message: [
             value => (value.length <= 128) || '字符长度为 0~128',
-          ]
+          ],
+          
         },
         // 总数
         total: 0,
         // 搜索用户
         search: '',
+        isChinese: true,
         // 是否展示添加用户 Dialog
         addUserDialog: false,
         // 是否展示删除用户 Dialog
         deleteDialog: false,
+        
 
-        // mode Item
-        modeItems: ['ALL', 'PLR', 'PDL', 'CPDL', 'OCC', 'VXXX', 'MFR'],
-        resultJudgmentItems: ['ALL', 'Accept', 'Reject'],
+        // 选择模式
+        modeItems: ['ALL', 'PLR', 'PDL', 'CPDL', 'OCC', 'VXXX', 'MFR', 'DPD', 'DPR', 'VDPD', 'VDPR', 'CDPD', 'CVDPD', 'VPLR', 'VPDL', 'CVPDL', 'VSFD', 'SPD', 'SPR', 'VSPD', 'VSPR'],
+        // 选择结果
+        resultJudgmentItems: ['ALL', 'Accept', 'Reject', 'Test_Stop', 'High_Test_P', 'Low_Test_P', 'Higher_Max_P', 'Lower_Min_P', 'Severe_Leak', 'Test_Error', 'High_P_Range', 'Test_Type_Err'],
+        // 搜索模式
         UserListModeItems: [{
           label: '用户名称',
           value: 1
@@ -405,6 +422,7 @@
       }
     },
     watch: {
+      // 监听弹出框
       addUserDialog (val) {
         if (val) {
           this.getRoleList()
@@ -416,6 +434,7 @@
       deleteDialog (val) {
         val || this.closeDeleteDialog()
       },
+      // 面包屑
       listIndex (val) {
         const breadcrumbsItems = [
           {
@@ -445,14 +464,17 @@
       }
     },
     computed: {
+      // 控制弹窗组件
       dialogComponent() {
         const dialogs = ['userListDialog', 'deviceListDialog', 'deviceDataListDialog','agentListDialog']
         return dialogs[this.listIndex]
       },
+      // 控制表头展示
       headers () {
         const headers = [this.userHeaders, this.deviceHeaders, this.deviceDataHeaders]
         return headers[this.listIndex]
       },
+      // 控制表格数据
       tableList() {
         const list = [this.userList, this.deviceList, this.deviceDataList]
         return list[this.listIndex]
@@ -501,10 +523,11 @@
         }
       },
       // 获取用户列表
-      async getUserList(pn = this.userPn, userName = '', userNumber = '', searchMode = false){
+      async getUserList(pn = this.userPn, userName, userNumber, searchMode = false){
         this.isLoading=true
-        this.tableOptions.page=pn
-        this.userPn=pn
+        this.tableOptions.page = pn
+        this.userPn = pn
+        // console.log(userName, userNumber,'username');
         const { data: {data: {list , total}}} = await this.$axios.get('/user/findUser',{
           params: {
             loginUserId: this.getItem('userId'),
@@ -515,7 +538,7 @@
           }
         })
         searchMode || (this.userList = list)
-        console.log(list);
+        // console.log(list);
         this.isLoading=false
         this.total = total
         return list
@@ -540,7 +563,7 @@
         this.currentUserId = this.editedItem.userId
         this.tableOptions.page=pn
         this.devicePn=pn   
-        console.log(this.editedItem);
+        console.log(deviceName,deviceNumber);
         const { data: { data: { list, total }}} = await this.$axios.get('/device/findDeviceList',{
           params: {
             pn,
@@ -561,12 +584,14 @@
         this.editedIndex = this.deviceList.indexOf(item)
         this.editedItem = Object.assign({}, item)
         this.currentDeviceId = item.deviceId
+        this.currentGroupId = item.groupId
         this.currentDeviceName=item.deviceName
         this.listIndex = 2
         await this.getDeviceData()
         console.log('item', item)
       },
-      async getDeviceData(pn = this.daviceDataPn, testMode = 'ALL', resultJudgment = 'ALL', groupId = this.search) {
+      async getDeviceData(pn = this.daviceDataPn, testMode = 'ALL', resultJudgment = 'ALL', testedBarCode = this.search) {
+        this.isLoading=true
         this.tableOptions.page=pn
         this.daviceDataPn=pn
         const { deviceId } = this.editedItem
@@ -575,9 +600,9 @@
             deviceId,
             testMode,
             resultJudgment,
-            testedBarCode:'',
-            groupId
+            testedBarCode
           }})
+        this.isLoading = false 
         this.deviceDataList = list
         console.log('list', total)
         this.total = total
@@ -599,8 +624,12 @@
                 console.log('response', response.data.code)
                 if (!response.data.code) {
                   this.showSnackbar('删除成功')
-                  let total =this.total - 1
-                  this.userPn=(total/10)%1==0?total/10:Math.floor(total/10)+1
+                  --this.total
+                  // console.log(this.userPn, this.total);
+                  if(this.total = (this.userPn - 1) * this.tableOptions.itemsPerPage){
+                    --this.userPn
+                  }
+                  // this.userPn=(total/10)%1==0?total/10:Math.floor(total/10)+1
                 } else {
                   this.showSnackbar('删除失败')
                 }
@@ -608,7 +637,9 @@
               .catch(res => {
                 this.showSnackbar('删除失败')
               })
-              .finally(this.getUserList)
+              .finally(() => {
+                this.getUserList()
+              })
             break
           case 1:
             this.$axios.delete('/device/deleteDevice',{
@@ -620,8 +651,11 @@
                 console.log('response', response.data.code)
                 if (!response.data.code) {
                   this.showSnackbar('删除成功')
-                  let total =this.total - 1
-                  this.devicePn=(total/10)%1==0?total/10:Math.floor(total/10)+1
+                  --this.total
+                  if(this.total === (this.devicePn - 1) * this.tableOptions.itemsPerPage){
+                    --this.devicePn
+                  }
+                  // this.devicePn=(total/10)%1==0?total/10:Math.floor(total/10)+1
                 } else {
                   this.showSnackbar('删除失败')
                 }
@@ -658,12 +692,14 @@
       handleBreadCrumbsClick(item) {
         this.listIndex = this.breadcrumbsItems.indexOf(item)
       },
+      // 控制页面切换
       async handlePageChange(page) {
         this.isLoading = true
         const methods = [this.getUserList, this.getDeviceList, this.getDeviceData]
-        await methods[this.listIndex](page)
+         this.listIndex === 2 ? await methods[this.listIndex](page, this.searchMode, this.searchResultJudgment) : await methods[this.listIndex](page)
         this.isLoading = false
       },
+      // 控制搜索模式切换
       handleModeChange(mode) {
         this.searchMode = mode
         this.getDeviceData(1, this.searchMode, this.searchResultJudgment)
@@ -678,8 +714,10 @@
       async handleDataListModeChange() {
         await this.handleSearch()
       },
+      // 输入触发搜索
       async handleSearch(e) {
-        if(/^(\w|-)+$/.test(e)||e.length===0) {
+        // 对按键作判断，若为无效按键，则不会触发搜索
+        if(/^[\u4e00-\u9fa5_a-zA-Z0-9]+$/.test(e) || e.length === 0) {
           let list = []
         switch (this.listIndex) {
           case 0:
@@ -688,7 +726,7 @@
             } else {
                list = await this.getUserList(1, '', this.search, true)
             }
-            console.log(list);
+            // console.log(list);
             this.userList = list
             // this.total = list.length
             break

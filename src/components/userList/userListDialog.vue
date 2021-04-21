@@ -247,6 +247,7 @@
       // }
     },
     computed:{
+      // 密码判断
       passwordConfirmationRule() {
         if(this.addUserItem.password!==this.addUserItem.confirmPassword){
           return () =>
@@ -278,6 +279,7 @@
         this.addUserDialog = false
         console.log(this.total);
       },
+      // 添加用户
       async handleAddUser() {
         this.$refs.form.validate()
         if (!this.valid) {
@@ -303,7 +305,6 @@
           } else {
             this.$emit('showSnackbar', message)
           }
-          console.log('data', data)
         } else {
           this.$emit('showSnackbar', "账号或用户编号已存在")
         }

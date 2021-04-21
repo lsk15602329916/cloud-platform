@@ -104,11 +104,49 @@
                   inset
                   vertical
           ></v-divider> -->
+          <div style="width: 90px"   v-if="listIndex === 3">
+            <v-select
+                    @change="handleModeChange"
+                    class="mt-1"
+                    height="28px"
+                    :items="modeItems"
+                    value="ALL"
+                    hide-details
+                    label="选择模式"
+            ></v-select>
+          </div>
+          <div style="width: 90px"   v-if="listIndex === 3">
+            <v-select
+                    @change="handleResultJudgmentChange"
+                    class="mt-1"
+                    height="28px"
+                    :items="resultJudgmentItems"
+                    value="ALL"
+                    hide-details
+                    label="选择结果"
+            ></v-select>
+          </div>
+          <v-divider
+                  v-if="listIndex === 3"
+                  class="mx-4"
+                  inset
+                  vertical
+          ></v-divider>
           <v-text-field
                   v-model="search"
                   append-icon="mdi-magnify"
+                  v-if="listIndex !== 3"
                   @input="handleSearch"
                   label="查询"
+                  single-line
+                  hide-details
+          ></v-text-field>
+          <v-text-field
+                  v-model="search"
+                  append-icon="mdi-magnify"
+                  v-else
+                  @input="handleSearch"
+                  label="查询(通过被测试条形码)"
                   single-line
                   hide-details
           ></v-text-field>
@@ -130,7 +168,7 @@
           ></component>
         </v-toolbar>
       </template>
-      <template v-slot:item.actions="{ item }">
+      <template v-slot:[`item.actions`]="{ item }">
         <div v-if="listIndex === 0">
           <v-icon
                   class="mr-2"
@@ -349,7 +387,7 @@
           {
             text: '全球唯一ID',
             align: 'start',
-            value: 'deviceNumber',
+            value: 'dataId',
           },
           { text: '组号', value: 'groupId', sortable: false },
           { text: '日期', value: 'date', sortable: false },
@@ -365,6 +403,7 @@
           { text: '运行次数', value: 'runNumber', sortable: false },
           { text: '被测试条形码', value: 'testedBarCode', sortable: false },
           { text: '节拍输出', value: 'beatOutput', sortable: false },
+          { text: '预留项', value: 'reservedMessage', sortable: false }
         ],
         // 列表
         agentList: [],
@@ -425,6 +464,12 @@
         addUserDialog: false,
         // 是否展示删除用户 Dialog
         deleteDialog: false,
+         // 选择模式
+        modeItems: ['ALL', 'PLR', 'PDL', 'CPDL', 'OCC', 'VXXX', 'MFR', 'DPD', 'DPR', 'VDPD', 'VDPR', 'CDPD', 'CVDPD', 'VPLR', 'VPDL', 'CVPDL', 'VSFD', 'SPD', 'SPR', 'VSPD', 'VSPR'],
+        // 选择结果
+        resultJudgmentItems: ['ALL', 'Accept', 'Reject', 'Test_Stop', 'High_Test_P', 'Low_Test_P', 'Higher_Max_P', 'Lower_Min_P', 'Severe_Leak', 'Test_Error', 'High_P_Range', 'Test_Type_Err'],
+        searchMode: 'ALL',
+        searchResultJudgment: 'ALL',
         AgentListModeItems: [{
           label: '代理商名称',
           value: 1
@@ -456,7 +501,8 @@
         editedIndex: -1,
         editedItem: null,
         agentPn:1,
-        userPn:1
+        userPn:1,
+        devicePn:1
       }
     },
     watch: {
@@ -621,6 +667,7 @@
         this.total = total
         // console.log('list', list)
       },
+      // 设备搜索
       async searchUserDevice(item) {
         this.deviceList = []
         this.editedIndex = this.userList.indexOf(item)
@@ -694,6 +741,10 @@
                 console.log('response', response.data.code)
                 if (!response.data.code) {
                   this.showSnackbar('删除成功')
+                  --this.total
+                  if(this.total === (this.agentPn - 1) * this.tableOptions.itemsPerPage){
+                    --this.agentPn
+                  }
                 } else {
                   this.showSnackbar('删除失败')
                 }
@@ -712,6 +763,10 @@
                 console.log('response', response.data.code)
                 if (!response.data.code) {
                   this.showSnackbar('删除成功')
+                  --this.total
+                  if(this.total === (this.userPn - 1) * this.tableOptions.itemsPerPage){
+                    --this.userPn
+                  }
                 } else {
                   this.showSnackbar('删除失败')
                 }
@@ -722,7 +777,7 @@
               .finally(this.getUserList)
             break
           case 2:
-                        this.$axios.delete('/device/deleteDevice',{
+            this.$axios.delete('/device/deleteDevice',{
               data: {
                 deviceId: this.editedItem.deviceId
               }
@@ -731,8 +786,10 @@
                 console.log('response', response.data.code)
                 if (!response.data.code) {
                   this.showSnackbar('删除成功')
-                  let total =this.total - 1
-                  this.devicePn=(total/10)%1==0?total/10:Math.floor(total/10)+1
+                  --this.total
+                  if(this.total === (this.devicePn - 1) * this.tableOptions.itemsPerPage){
+                    --this.devicePn
+                  }
                 } else {
                   this.showSnackbar('删除失败')
                 }
@@ -775,18 +832,18 @@
       },
       async handlePageChange(page) {
         this.isLoading = true
-        const methods = [this.getAgentList,this.getUserList]
-        await methods[this.listIndex](page)
+        const methods = [this.getAgentList,this.getUserList, this.getDeviceList, this.getDeviceData]
+        this.listIndex === 3 ? await methods[this.listIndex](page, this.searchMode, this.searchResultJudgment) : await methods[this.listIndex](page)
         this.isLoading = false
       },
-      // handleModeChange(mode) {
-      //   this.searchMode = mode
-      //   this.getDeviceData(1, this.searchMode, this.searchResultJudgment)
-      // },
-      // handleResultJudgmentChange(resultJudgment) {
-      //   this.searchResultJudgment = resultJudgment
-      //   this.getDeviceData(1, this.searchMode, this.searchResultJudgment)
-      // },
+      handleModeChange(mode) {
+        this.searchMode = mode
+        this.getDeviceData(1, this.searchMode, this.searchResultJudgment)
+      },
+      handleResultJudgmentChange(resultJudgment) {
+        this.searchResultJudgment = resultJudgment
+        this.getDeviceData(1, this.searchMode, this.searchResultJudgment)
+      },
       async handleUserListModeChange() {
         await this.handleSearch()
       },
@@ -794,7 +851,7 @@
         await this.handleSearch()
       },
       async handleSearch(e) {
-        if(/^(\w|-)+$/.test(e)||e.length===0) {
+        if(/^[\u4e00-\u9fa5_a-zA-Z0-9]+$/.test(e) || e.length === 0) {
         let list = []
         switch (this.listIndex) {
           case 0:
@@ -822,6 +879,9 @@
               list = this.getDeviceList(1, '',this.search)
             }
             break
+          case 3:
+            this.getDeviceData(1, this.searchMode, this.searchResultJudgment, this.search)
+          break
         }
         }
       },

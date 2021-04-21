@@ -31,7 +31,9 @@
                 <v-text-field
                         v-model="addDeviceItem.deviceNumber"
                         label="设备编号"
+                        autofocus
                         :rules="rules.deviceNumber"
+                        @blur='checkDeviceNumber'
                 ></v-text-field>
               </v-col>
             </v-row>
@@ -102,6 +104,7 @@
         deviceName: '',
         message: ''
       },
+      isOnlyDeviceNumber: false,
       rules: {
         deviceNumber: [
           value => (value && value.length >= 1 && value.length <= 32) || '字符长度为 1~32',
@@ -126,7 +129,24 @@
       closeAddDeviceDialog () {
         this.addDeviceDialog = false
       },
+      // 查询设备编号是否唯一
+      async checkDeviceNumber () {
+        const { data :{code,data}} = await this.$axios.get('/device/selectByDeviceNumber', { params: { deviceNumber: this.addDeviceItem.deviceNumber }})
+        // console.log(data);
+        if(!code){
+          this.isOnlyDeviceNumber = data
+        }
+        !this.isOnlyDeviceNumber && this.$emit('showSnackbar', '该设备编号已存在')
+        return data
+        // console.log(this.isOnlyDeviceNumber );
+      },
+      // 添加设备
       async handleAddDevice() {
+        this.isOnlyDeviceNumber = await this.checkDeviceNumber()
+        if (!this.isOnlyDeviceNumber) {
+          this.$emit('showSnackbar', '该设备编号已存在')
+          return
+        }
         if (!this.valid) {
           this.$emit('showSnackbar', '请正确填写信息')
           return

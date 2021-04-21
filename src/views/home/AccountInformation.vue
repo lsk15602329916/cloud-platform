@@ -217,8 +217,10 @@
     name: "AccountInformation",
     data() {
       return {
+        // 控制弹窗变量
         snackbar: false,
         snackbarHint: '',
+        // 用户信息
         superiorUserId: Number(this.getItem('superiorUserId')),
         agentBriefInfoList: [],
         informationValid: false,
@@ -227,6 +229,7 @@
         oldPassword: '',
         confirmPassword: '',
         newPassword: '',
+        // 正则
         passwordRules: [
           value => (value && value.length >= 5 && value.length <= 12) || '字符长度为 5~12',
           value => !(/[^a-zA-Z0-9]/.exec(value)) || '需使用数字、英文，不能使用特殊符号'
@@ -269,10 +272,11 @@
       // }
     },
     computed:{
-      handleVerifyPassword() {
-        // console.log(this.newPassword==this.confirmPassword);
-        if(this.newPassword!==this.confirmPassword){
-          return () =>
+    // 判断密码输入是否正确
+    handleVerifyPassword() {
+      // console.log(this.newPassword==this.confirmPassword);
+      if(this.newPassword!==this.confirmPassword){
+        return () =>
           this.newPassword === this.confirmPassword || "密码不一致";
         }
       }
@@ -283,6 +287,7 @@
         this.reservedInfoList=JSON.parse(reservedInfoList)
     },
     methods: {
+      // 更新用户信息
       async updateUserInfo() {
         if (!this.informationValid) {
           return
@@ -319,16 +324,17 @@
         this.agentBriefInfoList = data
         console.log('agent', this.agentBriefInfoList)
       },
+      // 控制只能最多加八条信息
       addReservedInformation() {
         if ( this.reservedInfoList.length < 8) {
           this.reservedInfoList.push('')
         }
       },
-
       showSnackbar(message) {
         this.snackbar = true
         this.snackbarHint = message
       },
+      // 更新密码
       async updatePassword() {
         if (!this.updatePasswordValid) {
           return

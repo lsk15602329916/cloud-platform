@@ -179,34 +179,17 @@
     },
     methods: {
       handleUserModify(){
-          let a = Object.assign({}, this.editedItem)
-          this.userItem=a
+          // console.log(Object.assign({}, this.editedItem));
+          this.userItem =  Object.assign({}, this.editedItem)
           this.getAgentInfo()
-          console.log(this.userItem);
-          this.reservedInfoList=a.reservedInfoList
-          console.log(this.reservedInfoList);
+          // console.log(this.userItem);
+          this.reservedInfoList= this.editedItem.reservedInfoList
+          // console.log(this.reservedInfoList);
       },
-      // handleVerifyPassword(value) {
-      //   if (value && value === this.userItem.password) {
-      //     return true
-      //   } else {
-      //     return '密码不一致'
-      //   }
-      // },
-    //   async getRoleList() {
-    //     const { data: { data }} = await this.$axios.get('/role/findRole')
-    //     this.roleList = data
-    //   },
-    //   async getAgentBriefInfoList() {
-    //     const { data: { data }} = await this.$axios.get('/user/findRegionalAgentBriefInfo')
-    //     this.agentBriefInfoList = data
-    //     console.log('agent', this.agentBriefInfoList)
-    //   },
-      // Dialog 控制层
       closeUserModifyDialog () {
         this.addUserDialog = false
       },
-        async updateUserInfo() {
+      async updateUserInfo() {
         if (!this.valid) {
           return
         }
@@ -236,7 +219,9 @@
         // console.log(data);
         console.log('mess', message)
       },
+      // 获取代理商信息
       async getAgentInfo() {
+        console.log( this.userItem);
           const { data: { code, message,data }} = await this.$axios.get('/user/selectUserinfoByUserId',{ params: { userId: this.userItem.superiorUserId }})
           if(!code){
             this.agentName=data.name
@@ -248,6 +233,7 @@
         this.agentBriefInfoList = data
         console.log('agent', this.agentBriefInfoList)
       },
+      // 添加预留信息
       addReservedInformation() {
         if ( this.reservedInfoList.length < 8) {
           this.reservedInfoList.push('')

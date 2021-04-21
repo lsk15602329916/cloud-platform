@@ -123,7 +123,7 @@
     <v-dialog
             v-model="addDialog"
             max-width="800px"
-            v-if="getItem('roleName') === 'admin'"
+            v-if="getItem('roleName') === 'admin' || getItem('roleName') === 'regionalAgent'"
     >
       <template v-slot:activator="{ on, attrs }">
         <v-btn
@@ -178,10 +178,20 @@
                 >
                   <v-text-field
                           v-model="item.value"
+                          :rules="formatRules(index)"
                           :label="item.label"
-                          hide-details
-                          :rules="rules"
                   ></v-text-field>
+                  <!-- <v-text-field
+                          v-else-if=""
+                          v-model="item.value"
+                          :label="item.label"
+                  ></v-text-field> -->
+                  <!-- <v-text-field
+                          v-else
+                          v-model="item.value"
+                          :label="item.label"
+                          :rules="rules"
+                  ></v-text-field> -->
                 </v-col>
               </v-row>
             </v-form>
@@ -212,6 +222,10 @@
         require
       },
       currentDeviceId: {
+        type: Number,
+        require
+      },
+      currentGroupId: {
         type: Number,
         require
       }
@@ -270,11 +284,34 @@
         }
       },
     },
+    computed:{
+      
+    },
     methods: {
+      formatRules(index){
+        if(index === 7) {
+          return [
+            v => v == '' || /(\d+)/.test(v) || '所填项必须由数字组成'
+          ]
+        } else if(index > 4 && index % 2 === 0 && index !== 8) {
+          return [
+            value => !!value || '必填',
+            value => (value || '').length <= 20 || '长度不应超过 20 个字符',
+          ]
+        } else if(index < 5 || index === 8) {
+          return []
+        } else {
+          return [
+            v=> !!v || '必填',
+            v => /(\d+)/.test(v) || '所填项必须由数字组成'
+          ]
+        }
+      },
       // Dialog 控制层
       closeAddDialog () {
         this.addDialog = false
       },
+      // 添加设备数据
       async getAddHeaders() {
         this.addOptions = []
         const resultJudgment = this.resultJudgment
@@ -311,10 +348,15 @@
               label: '被测条形码',
               prop: 'testedBarCode',
               value: ''
+            },{
+              label: '预留项',
+              prop: 'reservedMessage',
+              value: ''
             })
         } else {
           this.addOptions = []
         }
+        console.log(this.addOptions);
       },
       // 设置节流
       addDeviceData(){
@@ -328,11 +370,11 @@
                 that.isThrottle=true   
                 // console.log(that.isThrottle);
                 that.handleAddDeviceData()         
-            },2000)
+            },5000)
           }
       },
       async handleAddDeviceData() {
-
+        // console.log(this.valid);
         if (!this.valid) {
           this.$emit('showSnackbar', '请正确填写信息')
           return
@@ -346,20 +388,48 @@
         const seconds = now.getSeconds()
         const date = `${year}-${month}-${day}`
         const time = `${hour}:${minutes}:${seconds}`
-
+        const groupId = ''
         const testMode = this.mode
         const resultJudgment = this.resultJudgment
         const deviceId = this.currentDeviceId
-        const form = {
+        // const groupId = this.currentGroupId
+        const formObj = {
           date,
           time,
           testMode,
           resultJudgment,
-          deviceId
+          deviceId,
+          groupId
         }
         for (let item of this.addOptions) {
-          form[item.prop] = item.value
+          formObj[item.prop] = item.value
         }
+        const keyMap = {
+          pressureDrop: 'dataItem1', // 压降
+          pressureDropUnit: 'dataItem1Unit', 
+          leakRate: 'dataItem2', // 泄露率
+          leakRateUnit: 'dataItem2Unit',
+          testPressure: 'dataItem3', // 测试压
+          testPressureUnit: 'dataItem3Unit',
+          pressureDropAfterCompensation: 'dataItem2', // 补偿后压降
+          pressureDropAfterCompensationUnit: 'dataItem2Unit',
+          negativePressureMode: 'dataItem1', // 负压
+          negativePressureModeUnit: 'dataItem1Unit',
+          flowValue: 'dataItem1', // 流量值
+          flowValueUnit: 'dataItem1Unit',
+          smallLeak: 'dataItem1', // 小漏
+          smallLeakUnit: 'dataItem1Unit',
+          bigLeak: 'dataItem2', // 大漏
+          bigLeakUnit: 'dataItem2Unit',
+
+        }
+        let form= Object.keys(formObj).reduce((newData, key) => {
+          let newKey = keyMap[key] || key
+          newData[newKey] = formObj[key]
+          return newData
+        }, {})
+        form.groupId ? form.groupId : ''
+        console.log(form);
         const { data: {code, message} } = await this.$axios.post('/deviceData/addDeviceData', form)
         this.$emit('showSnackbar', message)
         this.$emit('updateDeviceData')
@@ -417,7 +487,7 @@
           this.$emit('showSnackbar', '导入失败')
         })
         this.importDialog = false
-      }
+      },
     }
   }
 </script>

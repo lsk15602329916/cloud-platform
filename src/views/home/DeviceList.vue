@@ -111,7 +111,7 @@
           ></component>
         </v-toolbar>
       </template>
-      <template v-slot:item.actions="{ item }">
+      <template v-slot:[`item.actions`]="{ item }">
         <div v-if="listIndex === 0">
           <v-icon
                   class="mr-2"
@@ -225,7 +225,7 @@
           {
             text: '全球唯一ID',
             align: 'start',
-            value: 'deviceNumber',
+            value: 'dataId',
           },
           { text: '组号', value: 'groupId', sortable: false },
           { text: '日期', value: 'date', sortable: false },
@@ -410,50 +410,13 @@
         const { data: { data }} = await this.$axios.get('/user/findRegionalAgentBriefInfo')
         this.agentBriefInfoList = data;
       },
-      // 新增 user
-      // async handleAddUser() {
-      //   if (!this.valid) {
-      //     this.showSnackbar('请正确填写信息')
-      //     return
-      //   }
-      //   const { data: { code, message }} = await this.$axios.get('/user/checkUser',{ params: { username: this.addUserItem.username }})
-      //   if(!code) {
-      //     const addUserItem = this.addUserItem
-      //     const { roleId } = this.addUserItem
-      //     // 普通用户为 2
-      //     // 区域代理商为 3
-      //     switch (roleId) {
-      //       case 2:
-      //         break
-      //       case 3:
-      //     }
-      //     const { data } = await this.$axios.post('/user/addUser', addUserItem)
-      //   } else {
-      //     this.showSnackbar(message)
-      //   }
-      // },
-      // 获取用户列表
-      // async getUserList(pn = 1, userName = '', userNumber = '', searchMode = false){
-      //   const { data: {data: {list , total}}} = await this.$axios.get('/user/findUser',{
-      //     params: {
-      //       loginUserId: this.getItem('userId'),
-      //       pn,
-      //       roleName: 'user',
-      //       userName,
-      //       userNumber
-      //     }
-      //   })
-      //   searchMode || (this.userList = list)
-      //   this.total = total
-      //   return list
-      // },
       // 获取设备列表
       async searchUserDevice(item) {
         this.deviceList = []
         this.listIndex = 0
         await this.getDeviceList()
       },
-      async getDeviceList(pn = this.devicePn,deviceName='',deviceNumber='') {
+      async getDeviceList(pn = this.devicePn, deviceName='', deviceNumber='') {
         this.currentUserId = this.getItem('userId')
         this.isLoading=true   
         // console.log(this.editedItem);
@@ -473,7 +436,7 @@
         console.log('list', list)
         this.isLoading=false
       },
-      // 获取设备 Data
+      // 获取设备数据 Data
       async searchDeviceData(item) {
         this.resultJudgment
         this.editedIndex = this.deviceList.indexOf(item)
@@ -576,6 +539,7 @@
       async handleUserListModeChange() {
         await this.handleSearch()
       },
+      // 输入搜索
       async handleSearch(e) {
         if(/^(\w|-)+$/.test(e)||e.length===0) {
         switch (this.listIndex) {
@@ -592,8 +556,10 @@
           //   break
           case 0:
             if(this.deviceListSearchMode){
+              console.log(1);
                 this.getDeviceList(1, this.search ,'')
             }else{
+               console.log(1);
                this.getDeviceList(1, '',this.search)
             } 
             break

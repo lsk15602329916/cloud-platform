@@ -1,3 +1,4 @@
+// 主页面
 <template>
   <v-main>
     <v-app-bar
@@ -67,6 +68,7 @@ export default {
   data () {
     return {
       selectedItem: 0,
+      // 侧边栏
       items: [
         { title: '首页', icon: 'mdi-view-dashboard', route: '/index', role: ['admin', 'user', 'regionalAgent']},
         { title: '账号信息', icon: 'mdi-account', route: '/account-information', role: ['admin', 'user', 'regionalAgent'] },
@@ -80,6 +82,7 @@ export default {
     }
   },  
   watch:{
+    // 监听路由变化
     $route(to,from){
       console.log(this.router.findIndex((res) => res.route===to.path));
       this.selectedItem  = this.router.findIndex((res) => res.route===to.path)
@@ -94,12 +97,12 @@ export default {
     console.log(this.router);
     // console.log(this.router);
     this.selectedItem=Number(this.getItem('selectedItem'))
-    this.unique([123,"webank",[1,2,3],"123",{a:1},"tencent",123,[1,2,3],{a:1}])
   },
   updated:function(){
     this.saveItem('selectedItem',this.selectedItem)
   },
   methods: {
+    // 退出登录
     handleQuit() {
       window.sessionStorage.clear()
       this.$store.commit('setReservedInfoList', [])
